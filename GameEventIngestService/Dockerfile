@@ -41,11 +41,8 @@ COPY --from=builder /build/target/GameEventIngestService-0.0.1-SNAPSHOT.jar app.
 # The application will write its log files here when it runs.
 # We use 'mkdir' because the 'logs' directory doesn't exist in the source code.
 RUN mkdir -p /app/src/logs
+COPY --from=builder /build/src/logs /app/src/logs
 
-# The application's entrypoint is commented out for debugging.
-# When you're ready to run the app normally, uncomment the ENTRYPOINT line
-# and remove the "sleep infinity" line.
-ENTRYPOINT ["sleep", "infinity"]
-# ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
 
 

@@ -24,7 +24,7 @@ services:
 
   game-event-ingest-service:
     build:
-      context: ./GameEventIngestService/GameEventIngestService
+      context: ./GameEventIngestService
       dockerfile: Dockerfile
     container_name: game-event-ingest-service
     depends_on:
@@ -42,3 +42,10 @@ services:
       KAFKA_BROKERS: kafka:19092
     depends_on:
       - kafka
+    command: >
+      sh -c '
+        echo "Waiting for Kafka...";
+        while ! nc -z kafka 19092; do sleep 1; done;
+        echo "Kafka is up!";
+        ./console'
+    restart: unless-stopped
