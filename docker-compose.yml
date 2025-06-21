@@ -21,6 +21,12 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_NUM_PARTITIONS: 3
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      test: ["CMD", "nc", "-vz", "localhost", "9092"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   game-event-ingest-service:
     build:
@@ -28,7 +34,8 @@ services:
       dockerfile: Dockerfile
     container_name: game-event-ingest-service
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     environment:
       - KAFKA_URL=kafka:19092
       - GAME_ID=game1
@@ -41,11 +48,6 @@ services:
     environment:
       KAFKA_BROKERS: kafka:19092
     depends_on:
-      - kafka
-    command: >
-      sh -c '
-        echo "Waiting for Kafka...";
-        while ! nc -z kafka 19092; do sleep 1; done;
-        echo "Kafka is up!";
-        ./console'
+      kafka:
+        condition: service_healthy
     restart: unless-stopped
