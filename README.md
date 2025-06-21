@@ -15,3 +15,6 @@ A project to simulate and display real-time NBA game events, allowing replays of
 The system uses a microservices architecture centered around Apache Kafka:
 
 ![Real-time NBA Architecture](./docs/real-time-NBA-architecture.drawio.png)
+
+
+#data from https://www.basketball-reference.com/boxscores/pbp/202406060BOS.html
