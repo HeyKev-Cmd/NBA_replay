@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .connected { background-color: #d4edda; color: #155724; }
+        .disconnected { background-color: #f8d7da; color: #721c24; }
+        .message { background-color: #e7f3ff; padding: 10px; margin: 5px 0; border-radius: 4px; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        #messages { max-height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; }
+        .error { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>WebSocket Test for ReplayService</h1>
+    
+    <div id="status" class="status disconnected">Disconnected</div>
+    
+    <div>
+        <button onclick="connect()">Connect</button>
+        <button onclick="disconnect()">Disconnect</button>
+        <button onclick="getStatus()">Get Status</button>
+        <button onclick="startReplay()">Start Replay</button>
+        <button onclick="clearMessages()">Clear Messages</button>
+    </div>
+    
+    <h3>Messages:</h3>
+    <div id="messages"></div>
+
+    <script>
+        let stompClient = null;
+
+        function connect() {
+            addMessage('Attempting to connect...');
+            
+            // Try SockJS first (recommended)
+            const socket = new SockJS('http://localhost:8081/ws/replay');
+            stompClient = Stomp.over(socket);
+            
+            // Enable debug logging
+            stompClient.debug = function(str) {
+                console.log(str);
+                addMessage('Debug: ' + str);
+            };
+            
+            stompClient.connect({}, function (frame) {
+                document.getElementById('status').textContent = 'Connected';
+                document.getElementById('status').className = 'status connected';
+                
+                addMessage('Connected to WebSocket successfully');
+                addMessage('Frame: ' + frame);
+                
+                // Subscribe to replay status
+                stompClient.subscribe('/topic/replay-status', function (message) {
+                    try {
+                        const data = JSON.parse(message.body);
+                        addMessage('Replay Status: ' + JSON.stringify(data, null, 2));
+                    } catch (e) {
+                        addMessage('Error parsing replay status: ' + e.message);
+                    }
+                });
+                
+                // Subscribe to game events
+                stompClient.subscribe('/topic/game-events', function (message) {
+                    try {
+                        const data = JSON.parse(message.body);
+                        addMessage('Game Event: ' + JSON.stringify(data, null, 2));
+                    } catch (e) {
+                        addMessage('Error parsing game event: ' + e.message);
+                    }
+                });
+                
+            }, function (error) {
+                document.getElementById('status').textContent = 'Connection failed';
+                document.getElementById('status').className = 'status disconnected';
+                addMessage('Connection failed: ' + error, 'error');
+                console.error('STOMP error:', error);
+            });
+        }
+
+        function disconnect() {
+            if (stompClient !== null) {
+                stompClient.disconnect();
+                document.getElementById('status').textContent = 'Disconnected';
+                document.getElementById('status').className = 'status disconnected';
+                addMessage('Disconnected');
+            }
+        }
+
+        function getStatus() {
+            if (stompClient) {
+                stompClient.send("/app/replay/status", {}, {});
+                addMessage('Requested replay status');
+            } else {
+                addMessage('Not connected. Please connect first.', 'error');
+            }
+        }
+
+        function startReplay() {
+            if (stompClient) {
+                stompClient.send("/app/replay/start", {}, {});
+                addMessage('Requested replay start');
+            } else {
+                addMessage('Not connected. Please connect first.', 'error');
+            }
+        }
+
+        function addMessage(text, className = 'message') {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = className;
+            messageDiv.innerHTML = '<strong>' + new Date().toLocaleTimeString() + '</strong>: ' + text;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function clearMessages() {
+            document.getElementById('messages').innerHTML = '';
+        }
+    </script>
+</body>
+</html> 
