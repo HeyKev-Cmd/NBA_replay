@@ -46,7 +46,7 @@ services:
       dockerfile: Dockerfile
     container_name: replay-service
     ports:
-      - "8082:8081"
+      - "8081:8081"
     depends_on:
       kafka:
         condition: service_healthy

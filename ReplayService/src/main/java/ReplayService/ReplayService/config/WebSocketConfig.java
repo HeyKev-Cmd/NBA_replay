@@ -1,41 +1,29 @@
 package ReplayService.ReplayService.config;
 
 import org.springframework.context.annotation.Configuration;
-import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
-import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
-import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
-import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
+import org.springframework.web.socket.config.annotation.EnableWebSocket;
+import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
+import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
+import org.springframework.beans.factory.annotation.Autowired;
 
+/**
+ * WebSocket configuration for handling raw JSON messages via WebSocket without STOMP.
+ */
 @Configuration
-@EnableWebSocketMessageBroker
-public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+@EnableWebSocket
+public class WebSocketConfig implements WebSocketConfigurer {
 
-    @Override
-    public void configureMessageBroker(MessageBrokerRegistry config) {
-        // Enable simple message broker for broadcasting to topics
-        config.enableSimpleBroker("/topic");
-        
-        // Set application destination prefix for client-to-server messages
-        config.setApplicationDestinationPrefixes("/app");
-    }
+    @Autowired
+    private JsonWebSocketHandler jsonWebSocketHandler;
 
+    /**
+     * Registers a custom WebSocket handler for raw JSON messages at "/ws/json".
+     *
+     * @param registry The WebSocketHandlerRegistry to register handlers with.
+     */
     @Override
-    public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // Register STOMP endpoint with SockJS support
-        registry.addEndpoint("/ws/replay")
-                .setAllowedOriginPatterns("*") // Allow all origins for development
-                .withSockJS(); // This provides WebSocket + fallback automatically
-        
-        // Also register native WebSocket endpoint for Postman compatibility
-        registry.addEndpoint("/ws/replay")
-                .setAllowedOriginPatterns("*"); // Native WebSocket support
+    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+        registry.addHandler(jsonWebSocketHandler, "/ws/replay")
+                .setAllowedOriginPatterns("*"); // Also allow /ws/replay for raw JSON
     }
-
-    @Override
-    public void configureWebSocketTransport(WebSocketTransportRegistration registration) {
-        registration.setMessageSizeLimit(64 * 1024) // 64KB
-                   .setSendBufferSizeLimit(512 * 1024) // 512KB
-                   .setSendTimeLimit(20000); // 20 seconds
-    }
-} 
+}

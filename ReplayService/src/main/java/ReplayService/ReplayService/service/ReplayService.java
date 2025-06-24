@@ -1,5 +1,6 @@
 package ReplayService.ReplayService.service;
 
+import ReplayService.ReplayService.config.JsonWebSocketHandler;
 import ReplayService.ReplayService.model.GameEvent;
 import ReplayService.ReplayService.model.ReplayRequest;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -7,31 +8,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.PartitionInfo;
-import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.ArrayList;
-import java.util.Comparator;
 
 @Service
 public class ReplayService {
 
     private static final Logger logger = LoggerFactory.getLogger(ReplayService.class);
 
-    private final SimpMessagingTemplate messagingTemplate;
+    private final JsonWebSocketHandler webSocketHandler;
     private final ObjectMapper objectMapper;
     private final Properties kafkaConsumerProps;
     private final ExecutorService replayExecutor = Executors.newSingleThreadExecutor();
@@ -40,13 +33,12 @@ public class ReplayService {
     @Value("${kafka.topic.name}")
     private String topicName;
 
-    public ReplayService(SimpMessagingTemplate messagingTemplate, ObjectMapper objectMapper,
+    public ReplayService(JsonWebSocketHandler webSocketHandler, ObjectMapper objectMapper,
                          @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers,
                          @Value("${spring.kafka.consumer.group-id}") String groupId) {
-        this.messagingTemplate = messagingTemplate;
+        this.webSocketHandler = webSocketHandler;
         this.objectMapper = objectMapper;
 
-        // Set up Kafka consumer properties for on-demand consumers
         this.kafkaConsumerProps = new Properties();
         this.kafkaConsumerProps.put("bootstrap.servers", bootstrapServers);
         this.kafkaConsumerProps.put("group.id", groupId + "_replay_" + System.currentTimeMillis());
@@ -72,7 +64,6 @@ public class ReplayService {
     private void stopReplay() {
         if (isReplaying.compareAndSet(true, false)) {
             logger.info("Stopping replay...");
-            // The running background task will detect the isReplaying flag and terminate.
         }
     }
 
@@ -96,7 +87,6 @@ public class ReplayService {
 
                 logger.info("Polled {} records from Kafka.", records.count());
 
-                // Parse and sort the batch of records by game time (ascending)
                 List<GameEvent> sortedEvents = new ArrayList<>();
                 for (ConsumerRecord<String, String> record : records) {
                     GameEvent event = parseGameEvent(record.value());
@@ -104,86 +94,67 @@ public class ReplayService {
                         sortedEvents.add(event);
                     }
                 }
-                // Sort by the game time ascending, so the earliest time comes first
-                sortedEvents.sort(Comparator.comparing((GameEvent e) -> parseGameTime(e.getTimestamp())));
+                sortedEvents.sort(Comparator.comparing(e -> parseGameTime(e.getTimestamp())));
 
                 for (GameEvent event : sortedEvents) {
                     logger.debug("Processing sorted event: {}", event);
-                    if (!isReplaying.get()) {
-                        logger.info("Stop flag detected, breaking from record processing loop.");
-                        break;
-                    }
+                    if (!isReplaying.get()) break;
 
                     Duration currentEventDuration = parseGameTime(event.getTimestamp());
 
-                    // This is the first event we are replaying in this session.
                     if (lastEventDuration == null) {
                         lastEventDuration = currentEventDuration;
-                        logger.info("Setting first event time to {}. No delay for this event.", formatDuration(lastEventDuration));
+                        logger.info("First event time: {}", formatDuration(lastEventDuration));
                     }
 
-                    // The delay is the difference between the current event and the last one we sent.
                     long timeDiffSeconds = currentEventDuration.minus(lastEventDuration).getSeconds();
-
-                    if (timeDiffSeconds < 0) {
-                        logger.warn("Skipping event with non-ascending timestamp after sort. Event at {} is before last sent event at {}.", formatDuration(currentEventDuration), formatDuration(lastEventDuration));
-                        continue;
-                    }
+                    if (timeDiffSeconds < 0) continue;
 
                     long delayMillis = (long) (timeDiffSeconds * 1000 / speed);
 
-                    logger.info("Calculated delay for event at {}: {}ms", event.getTimestamp(), delayMillis);
-
                     if (delayMillis > 0) {
                         try {
-                            logger.debug("Sleeping for {}ms...", delayMillis);
                             Thread.sleep(delayMillis);
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
-                            logger.warn("Replay sleep interrupted.");
                             break;
                         }
                     }
 
-                    if (!isReplaying.get()) {
-                        logger.info("Stop flag detected after sleep, breaking before send.");
-                        break;
-                    }
+                    if (!isReplaying.get()) break;
 
-                    logger.info(">>> Sending event to UI: {}", event);
-                    messagingTemplate.convertAndSend("/topic/game-events", event);
+                    logger.info(">>> Sending event: {}", event);
+                    webSocketHandler.broadcastToAll(objectMapper.writeValueAsString(event));
                     sendReplayStatus(currentEventDuration, speed);
-                    // Update the last sent event time
                     lastEventDuration = currentEventDuration;
                     sentEvent = true;
                 }
 
-                // Send status update every second, even if no event was sent
                 long now = System.currentTimeMillis();
                 if (!sentEvent && now - lastStatusTime >= 1000) {
-                    sendReplayStatus(null, speed); // or pass the last known replay time if you want
+                    sendReplayStatus(null, speed);
                     lastStatusTime = now;
                 }
             }
+        } catch (Exception e) {
+            logger.error("Error during replay", e);
         } finally {
             isReplaying.set(false);
-            logger.info("Replay finished and consumer is closed.");
-            // sendReplayStatus(null, 0.0); // Final status update
+            logger.info("Replay finished.");
         }
     }
-    
+
     private GameEvent parseGameEvent(String message) {
         try {
             JsonNode rootNode = objectMapper.readTree(message);
             JsonNode payloadNode = rootNode.path("value").path("payload");
             if (payloadNode.isMissingNode() || payloadNode.isNull()) {
-                // Fallback for direct GameEvent JSON
                 return objectMapper.readValue(message, GameEvent.class);
             } else {
                 return objectMapper.treeToValue(payloadNode, GameEvent.class);
             }
         } catch (Exception e) {
-            logger.error("Failed to parse message into GameEvent: {}", message, e);
+            logger.error("Failed to parse message: {}", message, e);
             return null;
         }
     }
@@ -195,8 +166,7 @@ public class ReplayService {
             long seconds = Long.parseLong(parts[1]);
             return Duration.ofMinutes(minutes).plusSeconds(seconds);
         } catch (Exception e) {
-            // Log once and then return null to avoid spamming for bad data
-            logger.error("Invalid game time format for timestamp: '{}'", timestamp);
+            logger.error("Invalid game time format: '{}'", timestamp);
             return null;
         }
     }
@@ -207,21 +177,29 @@ public class ReplayService {
         long seconds = duration.toSecondsPart();
         return String.format("%02d:%02d", minutes, seconds);
     }
-    
+
     private void sendReplayStatus(Duration currentReplayTime, Double speed) {
-        var status = new java.util.HashMap<String, Object>();
-        status.put("status", isReplaying.get() ? "replaying" : "stopped");
-        status.put("currentReplayTime", formatDuration(currentReplayTime));
-        status.put("speed", speed);
-        status.put("timestamp", System.currentTimeMillis());
-        messagingTemplate.convertAndSend("/topic/replay-status", status);
+        try {
+            Map<String, Object> status = new HashMap<>();
+            status.put("status", isReplaying.get() ? "replaying" : "stopped");
+            status.put("currentReplayTime", formatDuration(currentReplayTime));
+            status.put("speed", speed);
+            status.put("timestamp", System.currentTimeMillis());
+            webSocketHandler.broadcastToAll(objectMapper.writeValueAsString(status));
+        } catch (Exception e) {
+            logger.error("Failed to send replay status", e);
+        }
     }
-    
+
     private void sendErrorStatus(String error) {
-        var status = new java.util.HashMap<String, Object>();
-        status.put("status", "error");
-        status.put("error", error);
-        status.put("timestamp", System.currentTimeMillis());
-        messagingTemplate.convertAndSend("/topic/replay-status", status);
+        try {
+            Map<String, Object> status = new HashMap<>();
+            status.put("status", "error");
+            status.put("error", error);
+            status.put("timestamp", System.currentTimeMillis());
+            webSocketHandler.broadcastToAll(objectMapper.writeValueAsString(status));
+        } catch (Exception e) {
+            logger.error("Failed to send error status", e);
+        }
     }
-} 
+}

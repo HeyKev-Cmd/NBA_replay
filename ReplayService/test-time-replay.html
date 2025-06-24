@@ -3,137 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time-Based NBA Replay Test</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <title>Time-Based NBA Replay Test (Raw JSON WebSocket)</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        .status {
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 4px;
-            font-weight: bold;
-        }
+        body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; background-color: #f5f5f5; }
+        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 4px; font-weight: bold; }
         .connected { background-color: #d4edda; color: #155724; }
         .disconnected { background-color: #f8d7da; color: #721c24; }
-        .event {
-            background-color: #e7f3ff;
-            border: 1px solid #b3d9ff;
-            padding: 10px;
-            margin: 5px 0;
-            border-radius: 4px;
-        }
-        .event-type {
-            font-weight: bold;
-            color: #0066cc;
-        }
-        .player-info {
-            color: #333;
-        }
-        .timestamp {
-            color: #666;
-            font-size: 0.9em;
-        }
-        .replay-time {
-            background-color: #fff3cd;
-            border: 1px solid #ffeaa7;
-            padding: 5px;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-        button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin: 5px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        button:disabled {
-            background-color: #6c757d;
-            cursor: not-allowed;
-        }
-        .control-panel {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin: 20px 0;
-        }
-        .input-group {
-            margin: 10px 0;
-        }
-        .input-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        .input-group input, .input-group select {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        #events-container {
-            max-height: 400px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
-            padding: 10px;
-            background-color: #fafafa;
-        }
-        .clear-btn {
-            background-color: #dc3545;
-        }
-        .clear-btn:hover {
-            background-color: #c82333;
-        }
-        .replay-info {
-            background-color: #e7f3ff;
-            padding: 10px;
-            border-radius: 4px;
-            margin: 10px 0;
-        }
+        .event { background-color: #e7f3ff; border: 1px solid #b3d9ff; padding: 10px; margin: 5px 0; border-radius: 4px; }
+        .event-type { font-weight: bold; color: #0066cc; }
+        .player-info { color: #333; }
+        .timestamp { color: #666; font-size: 0.9em; }
+        .replay-time { background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 5px; border-radius: 4px; font-weight: bold; }
+        button { background-color: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .control-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+        .input-group { margin: 10px 0; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .input-group input, .input-group select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        #events-container { max-height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background-color: #fafafa; }
+        .clear-btn { background-color: #dc3545; }
+        .clear-btn:hover { background-color: #c82333; }
+        .replay-info { background-color: #e7f3ff; padding: 10px; border-radius: 4px; margin: 10px 0; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🏀 Time-Based NBA Replay Test</h1>
-        
+        <h1>🏀 Time-Based NBA Replay Test (Raw JSON WebSocket)</h1>
         <div id="status" class="status disconnected">Disconnected</div>
-        
         <div>
             <button id="connectBtn" onclick="connect()">Connect</button>
             <button id="disconnectBtn" onclick="disconnect()" disabled>Disconnect</button>
             <button class="clear-btn" onclick="clearEvents()">Clear Events</button>
         </div>
     </div>
-
     <div class="container">
         <h2>Replay Controls</h2>
-        
         <div class="control-panel">
             <div>
                 <div class="input-group">
-                    <label for="startTime">Start Time (HH:MM):</label>
+                    <label for="startTime">Start Time (MM:SS):</label>
                     <input type="text" id="startTime" value="00:00" placeholder="00:00">
                 </div>
-                
                 <div class="input-group">
                     <label for="speed">Playback Speed:</label>
                     <select id="speed">
@@ -147,17 +59,14 @@
                         <option value="96.0">96.0x (Flash)</option>
                     </select>
                 </div>
-                
                 <button id="startBtn" onclick="startReplay()" disabled>Start Replay</button>
                 <button id="stopBtn" onclick="stopReplay()" disabled>Stop Replay</button>
             </div>
-            
             <div>
                 <div class="replay-info">
                     <h3>Replay Status</h3>
                     <div id="replayStatus">Not started</div>
                 </div>
-                
                 <div class="replay-info">
                     <h3>Current Replay Time</h3>
                     <div id="currentReplayTime" class="replay-time">--:--</div>
@@ -165,117 +74,88 @@
             </div>
         </div>
     </div>
-
     <div class="container">
         <h2>Game Events</h2>
         <div id="events-container">
             <div>No events received yet...</div>
         </div>
     </div>
-
     <script>
-        let stompClient = null;
+        let ws = null;
         let connected = false;
-
         function connect() {
-            const socket = new SockJS('http://localhost:8082/ws/replay');
-            stompClient = Stomp.over(socket);
-            
-            stompClient.connect({}, function (frame) {
+            ws = new WebSocket('ws://localhost:8081/ws/replay');
+            ws.onopen = function() {
                 connected = true;
                 updateStatus('Connected to Replay Service', 'connected');
                 document.getElementById('connectBtn').disabled = true;
                 document.getElementById('disconnectBtn').disabled = false;
                 document.getElementById('startBtn').disabled = false;
                 document.getElementById('stopBtn').disabled = false;
-                
-                console.log('Connected: ' + frame);
-                
-                // Subscribe to game events
-                stompClient.subscribe('/topic/game-events', function (message) {
-                    console.log("<<< Received Game Event:", message.body);
-                    try {
-                        const gameEvent = JSON.parse(message.body);
-                        displayEvent(gameEvent);
-                    } catch (e) {
-                        console.error("Error parsing game event JSON:", e);
-                        displayError("Error parsing game event: " + e.message);
-                    }
-                });
-                
-                // Subscribe to replay status
-                stompClient.subscribe('/topic/replay-status', function (message) {
-                    console.log("<<< Received Replay Status:", message.body);
-                    try {
-                        const status = JSON.parse(message.body);
-                        displayReplayStatus(status);
-                    } catch (e) {
-                        console.error("Error parsing replay status JSON:", e);
-                        displayError("Error parsing replay status: " + e.message);
-                    }
-                });
-                
-            }, function (error) {
-                console.log('STOMP error: ' + error);
-                updateStatus('Connection failed', 'disconnected');
-            });
-        }
-
-        function disconnect() {
-            if (stompClient !== null) {
-                stompClient.disconnect();
+                addMessage('WebSocket connected');
+            };
+            ws.onclose = function() {
                 connected = false;
                 updateStatus('Disconnected', 'disconnected');
                 document.getElementById('connectBtn').disabled = false;
                 document.getElementById('disconnectBtn').disabled = true;
                 document.getElementById('startBtn').disabled = true;
                 document.getElementById('stopBtn').disabled = true;
-            }
+                addMessage('WebSocket disconnected');
+            };
+            ws.onerror = function(e) {
+                updateStatus('Connection error', 'disconnected');
+                addMessage('WebSocket error: ' + e.message);
+            };
+            ws.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'game-event' || data.event_type) {
+                        displayEvent(data.data || data);
+                    } else if (data.type === 'replay-status' || data.status) {
+                        displayReplayStatus(data);
+                    } else if (data.type === 'error' || data.status === 'error') {
+                        displayError(data.error || JSON.stringify(data));
+                    } else {
+                        addMessage('Received: ' + event.data);
+                    }
+                } catch (e) {
+                    addMessage('Non-JSON message: ' + event.data);
+                }
+            };
         }
-
+        function disconnect() {
+            if (ws) ws.close();
+        }
         function startReplay() {
-            if (!connected) {
-                alert('Please connect first');
-                return;
-            }
-            
+            if (!connected) { alert('Please connect first'); return; }
             const startTime = document.getElementById('startTime').value;
             const speed = parseFloat(document.getElementById('speed').value);
-            
             if (!startTime || !startTime.match(/^\d{2}:\d{2}$/)) {
-                alert('Please enter a valid time in HH:MM format (e.g., 05:00)');
+                alert('Please enter a valid time in MM:SS format (e.g., 05:00)');
                 return;
             }
-            
-            const request = {
-                startTime: startTime,
-                speed: speed
-            };
-            
-            stompClient.send("/app/replay/start", {}, JSON.stringify(request));
+            const request = { action: 'start_replay', startTime, speed };
+            ws.send(JSON.stringify(request));
             addMessage(`Starting replay from ${startTime} at ${speed}x speed`);
         }
-
         function stopReplay() {
             if (connected) {
-                stompClient.send("/app/replay/stop", {}, {});
+                ws.send(JSON.stringify({ action: 'stop_replay' }));
                 addMessage('Stopping replay');
             }
         }
-
         function updateStatus(message, className) {
             const statusDiv = document.getElementById('status');
             statusDiv.textContent = message;
             statusDiv.className = 'status ' + className;
         }
-
         function displayReplayStatus(status) {
             const statusDiv = document.getElementById('replayStatus');
             const currentTimeDiv = document.getElementById('currentReplayTime');
-            
             let statusText = '';
             if (status.status === 'replaying') {
-                statusText = `🟢 Replaying from ${status.replayStartTime} at ${status.speed}x speed`;
+                statusText = `🟢 Replaying at ${status.speed}x speed`;
                 statusDiv.className = 'replay-time';
                 currentTimeDiv.textContent = status.currentReplayTime || '--:--';
             } else if (status.status === 'stopped') {
@@ -289,36 +169,27 @@
                 statusText = `ℹ️ ${status.message || 'Ready'}`;
                 statusDiv.className = '';
             }
-            
             statusDiv.innerHTML = statusText;
-            
             if (status.pendingEvents !== undefined) {
                 addMessage(`Replay status: ${statusText} (${status.pendingEvents} pending events)`);
             }
         }
-
         function displayEvent(gameEvent) {
             const container = document.getElementById('events-container');
             const eventDiv = document.createElement('div');
             eventDiv.className = 'event';
-            
             const currentTime = new Date().toLocaleTimeString();
             eventDiv.innerHTML = `
-                <div class="event-type">${gameEvent.event_type.toUpperCase()}</div>
-                <div class="player-info">${gameEvent.firstname} ${gameEvent.lastname} (#${gameEvent.player_number})</div>
-                <div class="timestamp">Game Time: ${gameEvent.timestamp} | Received: ${currentTime}</div>
+                <div class="event-type">${gameEvent.event_type ? gameEvent.event_type.toUpperCase() : ''}</div>
+                <div class="player-info">${gameEvent.firstname || ''} ${gameEvent.lastname || ''} (#${gameEvent.player_number || ''})</div>
+                <div class="timestamp">Game Time: ${gameEvent.timestamp || ''} | Received: ${currentTime}</div>
             `;
-            
-            // Add to the beginning of the container
             container.insertBefore(eventDiv, container.firstChild);
-            
-            // Limit the number of displayed events
             const events = container.querySelectorAll('.event');
             if (events.length > 50) {
                 container.removeChild(events[events.length - 1]);
             }
         }
-
         function displayError(errorMessage) {
             const container = document.getElementById('events-container');
             const errorDiv = document.createElement('div');
@@ -328,11 +199,9 @@
             errorDiv.innerHTML = `<strong>ERROR:</strong> ${errorMessage}`;
             container.insertBefore(errorDiv, container.firstChild);
         }
-
         function addMessage(text) {
             console.log(text);
         }
-
         function clearEvents() {
             const container = document.getElementById('events-container');
             container.innerHTML = '<div>No events received yet...</div>';

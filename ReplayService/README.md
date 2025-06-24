@@ -5,7 +5,7 @@ A Spring Boot service that subscribes to Kafka topics containing NBA game events
 ## Features
 
 - **Kafka Consumer**: Subscribes to NBA game event topics
-- **WebSocket Server**: Broadcasts events to connected clients in real-time
+- **WebSocket Server**: Broadcasts events to connected clients in real-time using raw JSON WebSocket
 - **Time-Based Replay**: Replay events with original timing from any start point
 - **Playback Speed Control**: Adjust replay speed (0.5x to 5.0x)
 - **REST API**: Health checks and service status endpoints
@@ -15,7 +15,7 @@ A Spring Boot service that subscribes to Kafka topics containing NBA game events
 
 The service can replay events with their original timing:
 
-1. **Client sends replay request**: `{"startTime": "05:00", "speed": 1.0}`
+1. **Client sends replay request**: `{"action": "start_replay", "startTime": "05:00", "speed": 1.0}`
 2. **Service sets internal timer** to 05:00
 3. **When event at 05:07 arrives**, service waits 7 seconds before sending to client
 4. **Events are replayed** in chronological order with proper timing
@@ -67,45 +67,30 @@ websocket.endpoint=/ws/replay
 
 ### WebSocket Endpoints
 
-- **Connection**: `ws://localhost:8081/ws/replay`
-- **Game Events Topic**: `/topic/game-events`
-- **Replay Status Topic**: `/topic/replay-status`
+- **Connection**: `ws://localhost:8081/ws/replay` (Raw JSON WebSocket)
 
 ### WebSocket Commands
 
 #### Start Time-Based Replay
-```javascript
-// Send to /app/replay/start
+```json
 {
-    "destination": "/app/replay/start",
-    "body": {
-        "startTime": "05:00",
-        "speed": 1.0
-    }
+  "action": "start_replay",
+  "startTime": "05:00",
+  "speed": 1.0
 }
 ```
 
 #### Stop Replay
-```javascript
-// Send to /app/replay/stop
+```json
 {
-    "destination": "/app/replay/stop"
+  "action": "stop_replay"
 }
 ```
 
 #### Get Replay Status
-```javascript
-// Send to /app/replay/status
-// No payload needed
-```
-
-#### Generic Replay Request
-```javascript
-// Send to /app/replay/request
+```json
 {
-    "action": "start_replay",  // "start_replay", "stop_replay", "get_status"
-    "startTime": "05:00",      // Required for start_replay
-    "speed": 1.0               // Optional, defaults to 1.0
+  "action": "get_status"
 }
 ```
 
@@ -168,7 +153,7 @@ Use the provided `test-time-replay.html` file to test the time-based replay func
 
 1. Start the service
 2. Open `test-time-replay.html` in a web browser
-3. Click "Connect" to establish WebSocket connection
+3. Click "Connect" to establish WebSocket connection to `ws://localhost:8081/ws/replay`
 4. Set start time (e.g., "05:00") and speed (e.g., "1.0x")
 5. Click "Start Replay"
 6. Events will be replayed with proper timing
@@ -185,6 +170,28 @@ curl http://localhost:8081/api/health
 curl http://localhost:8081/api/status
 ```
 
+### WebSocket Testing
+
+Connect to the WebSocket endpoint and send JSON messages:
+
+```javascript
+// Connect to WebSocket
+const ws = new WebSocket('ws://localhost:8081/ws/replay');
+
+// Send replay request
+ws.send(JSON.stringify({
+  "action": "start_replay",
+  "startTime": "00:00",
+  "speed": 1.0
+}));
+
+// Listen for events
+ws.onmessage = function(event) {
+  const data = JSON.parse(event.data);
+  console.log('Received:', data);
+};
+```
+
 ## Architecture
 
 ```
@@ -194,7 +201,7 @@ KafkaConsumerService (consumes messages)
     ↓
 ReplayService (manages timing and replay)
     ↓
-WebSocket Broadcast (with timing)
+JsonWebSocketHandler (broadcasts JSON messages)
     ↓
 Connected Clients (UI)
 ```
@@ -202,7 +209,7 @@ Connected Clients (UI)
 ## Replay Features
 
 ### ✅ Time-Based Replay
-- Start replay from any game time (HH:MM format)
+- Start replay from any game time (MM:SS format)
 - Events are replayed in chronological order
 - Proper timing delays between events
 

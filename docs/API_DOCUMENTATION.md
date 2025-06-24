@@ -8,7 +8,7 @@ This document provides detailed API documentation for the NBA Replay System serv
 
 ### Base URL
 - **Local Development**: `http://localhost:8081`
-- **Docker**: `http://localhost:8082`
+- **Docker**: `http://localhost:8081`
 
 ### REST Endpoints
 
@@ -55,7 +55,7 @@ GET /api/status
 ### WebSocket Endpoints
 
 #### Connection
-- **URL**: `ws://localhost:8082/ws/replay`
+- **URL**: `ws://localhost:8081/ws/replay`
 - **Protocol**: STOMP over SockJS
 
 #### Topics
@@ -296,7 +296,7 @@ POST /api/ingest/game/{gameId}
 ### JavaScript Client Example
 ```javascript
 // Connect to WebSocket
-const socket = new SockJS('http://localhost:8082/ws/replay');
+const socket = new SockJS('http://localhost:8081/ws/replay');
 const stompClient = Stomp.over(socket);
 
 stompClient.connect({}, function (frame) {
@@ -329,12 +329,12 @@ stompClient.send("/app/replay/stop", {}, JSON.stringify({}));
 
 #### Health Check
 ```bash
-curl -X GET http://localhost:8082/api/health
+curl -X GET http://localhost:8081/api/health
 ```
 
 #### Service Status
 ```bash
-curl -X GET http://localhost:8082/api/status
+curl -X GET http://localhost:8081/api/status
 ```
 
 ## Configuration

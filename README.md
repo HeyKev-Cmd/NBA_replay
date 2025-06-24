@@ -66,7 +66,7 @@ docker-compose up -d
 
 - **Web UI**: http://localhost:8000/test-time-replay.html
 - **Kafka Console**: http://localhost:8080
-- **Replay Service API**: http://localhost:8082/api/health
+- **Replay Service API**: http://localhost:8081/api/health
 
 ### 3. Test the Replay
 
@@ -93,7 +93,7 @@ The system includes the following services:
 - **Data Source**: Basketball Reference play-by-play data
 
 #### Replay Service
-- **Port**: 8082 (external), 8081 (internal)
+- **Port**: 8081 (external), 8081 (internal)
 - **Purpose**: Manages replay timing and WebSocket streaming
 - **Features**: Time-based replay, speed control, offset management
 
@@ -147,12 +147,12 @@ GAME_ID=game1
 
 #### Health Check
 ```bash
-curl http://localhost:8082/api/health
+curl http://localhost:8081/api/health
 ```
 
 #### Service Status
 ```bash
-curl http://localhost:8082/api/status
+curl http://localhost:8081/api/status
 ```
 
 ### WebSocket Commands
@@ -289,10 +289,10 @@ docker-compose logs -f game-event-ingest-service
 
 ```bash
 # Check replay service health
-curl http://localhost:8082/api/health
+curl http://localhost:8081/api/health
 
 # Check service status
-curl http://localhost:8082/api/status
+curl http://localhost:8081/api/status
 ```
 
 ## 🐛 Troubleshooting
@@ -301,7 +301,7 @@ curl http://localhost:8082/api/status
 
 #### WebSocket Connection Failed
 - **Cause**: Replay service not running or wrong port
-- **Solution**: Check service logs and ensure port 8082 is accessible
+- **Solution**: Check service logs and ensure port 8081 is accessible
 
 #### No Events Displayed
 - **Cause**: Kafka topic empty or consumer issues

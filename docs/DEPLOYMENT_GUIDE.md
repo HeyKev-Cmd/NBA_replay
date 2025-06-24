@@ -14,7 +14,7 @@ This guide covers deploying the NBA Replay System in various environments, from 
 - **Maven**: Version 3.6 or higher (for local development)
 - **Memory**: Minimum 4GB RAM, 8GB recommended
 - **Storage**: Minimum 10GB free space
-- **Network**: Ports 8000, 8080, 8082, 9092 available
+- **Network**: Ports 8000, 8080, 8081, 9092 available
 
 ### Operating System Support
 
@@ -50,7 +50,7 @@ docker-compose ps
 
 ```bash
 # Check service health
-curl http://localhost:8082/api/health
+curl http://localhost:8081/api/health
 
 # Check Kafka console
 curl http://localhost:8080
@@ -65,7 +65,7 @@ curl http://localhost:8000/test-time-replay.html
 |---------|-----|---------|
 | Web UI | http://localhost:8000/test-time-replay.html | Replay interface |
 | Kafka Console | http://localhost:8080 | Kafka management |
-| Replay Service | http://localhost:8082 | API and WebSocket |
+| Replay Service | http://localhost:8081 | API and WebSocket |
 
 ## Production Deployment
 
@@ -121,7 +121,7 @@ services:
       dockerfile: Dockerfile
     container_name: replay-service-prod
     ports:
-      - "8082:8081"
+      - "8081:8081"
     depends_on:
       kafka:
         condition: service_healthy
@@ -453,10 +453,10 @@ docker-compose -f docker-compose.prod.yml up -d
 
 ```bash
 # Check service health
-curl http://localhost:8082/api/health
+curl http://localhost:8081/api/health
 
 # Check detailed status
-curl http://localhost:8082/api/status
+curl http://localhost:8081/api/status
 
 # Check Docker container health
 docker ps --format "table {{.Names}}\t{{.Status}}"
@@ -525,7 +525,7 @@ cp -r GameEventIngestService/src/main/resources/ backups/ingest-service-config/
 docker info
 
 # Check available ports
-netstat -tulpn | grep :8082
+netstat -tulpn | grep :8081
 
 # Check disk space
 df -h
@@ -546,10 +546,10 @@ docker exec kafka kafka-console-producer.sh --bootstrap-server localhost:9092 --
 #### WebSocket Connection Issues
 ```bash
 # Check WebSocket endpoint
-curl -I http://localhost:8082/ws/replay
+curl -I http://localhost:8081/ws/replay
 
 # Check CORS configuration
-curl -H "Origin: http://localhost:8000" -v http://localhost:8082/api/health
+curl -H "Origin: http://localhost:8000" -v http://localhost:8081/api/health
 ```
 
 ### Performance Tuning
