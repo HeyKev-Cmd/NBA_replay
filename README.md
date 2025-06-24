@@ -1,3 +1,117 @@
+# NBA 即時資料系統
+
+這是一個完整的 NBA 即時資料系統，包含資料庫、後端 API、前端界面和即時資料處理。
+
+## 系統架構
+
+- **資料庫**: PostgreSQL (NBA 球隊、球員、比賽資料)
+- **後端 API**: Node.js + Express (提供 RESTful API)
+- **前端**: React + Tailwind CSS (現代化 Web 界面)
+- **即時處理**: Kafka + Java Spring Boot (處理比賽事件)
+- **監控**: Redpanda Console (Kafka 管理界面)
+
+## 快速開始
+
+### 1. 啟動所有服務
+
+```bash
+docker-compose up -d
+```
+
+這將啟動以下服務：
+- PostgreSQL 資料庫 (port 5432)
+- Kafka 訊息佇列 (port 9092)
+- 後端 API 服務 (port 3001)
+- 前端 React 應用 (port 3000)
+- Redpanda Console (port 8080)
+- Java 即時處理服務
+
+### 2. 訪問應用
+
+- **前端界面**: http://localhost:3000
+- **後端 API**: http://localhost:3001/api
+- **Kafka 管理**: http://localhost:8080
+- **資料庫**: localhost:5432
+
+### 3. 功能頁面
+
+前端包含以下頁面：
+- **儀表板**: 系統概覽和統計資料
+- **球隊**: 顯示所有 NBA 球隊資訊
+- **球員**: 顯示球員詳細資料
+- **比賽**: 顯示比賽列表和結果
+- **比賽事件**: 顯示即時比賽事件
+- **球員統計**: 顯示球員表現統計
+
+## 開發模式
+
+### 前端開發
+
+```bash
+cd frontend
+npm install
+npm start
+```
+
+### 後端開發
+
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+## API 端點
+
+### 球隊相關
+- `GET /api/teams` - 獲取所有球隊
+- `GET /api/teams/:id` - 獲取特定球隊
+
+### 球員相關
+- `GET /api/players` - 獲取所有球員
+- `GET /api/players/:id` - 獲取特定球員
+
+### 比賽相關
+- `GET /api/games` - 獲取所有比賽
+- `GET /api/games/summary` - 獲取比賽摘要
+- `GET /api/games/:id` - 獲取特定比賽
+
+### 比賽事件相關
+- `GET /api/game-events` - 獲取所有比賽事件
+- `GET /api/game-events/recent` - 獲取最近事件
+
+### 球員統計相關
+- `GET /api/player-stats` - 獲取所有球員統計
+- `GET /api/player-stats/top-performers` - 獲取頂尖球員
+
+## 資料庫結構
+
+系統包含以下主要表格：
+- `teams` - 球隊資訊
+- `players` - 球員資訊
+- `games` - 比賽資訊
+- `game_events` - 比賽事件
+- `player_stats` - 球員統計
+
+## 技術棧
+
+- **前端**: React 18, Tailwind CSS, Axios
+- **後端**: Node.js, Express, PostgreSQL
+- **資料庫**: PostgreSQL
+- **訊息佇列**: Apache Kafka
+- **容器化**: Docker & Docker Compose
+- **即時處理**: Java Spring Boot
+
+## 故障排除
+
+1. **資料庫連接問題**: 確保 PostgreSQL 容器已啟動並健康
+2. **前端無法連接後端**: 檢查後端 API 是否在 port 3001 運行
+3. **Kafka 連接問題**: 檢查 Kafka 容器狀態和端口配置
+
+## 貢獻
+
+歡迎提交 Issue 和 Pull Request 來改善這個專案。
+
 # NBA Real-time Game Replay System
 
 A comprehensive system for replaying NBA game events with precise timing control, built with Spring Boot, Kafka, and WebSockets.
