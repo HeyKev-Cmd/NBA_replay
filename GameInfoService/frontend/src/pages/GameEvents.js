@@ -9,7 +9,7 @@ const GameEvents = () => {
     const fetchGameEvents = async () => {
       try {
         console.log('GameEvents: 開始 fetch /api/game-events');
-        const response = await fetch('http://localhost:8081/api/game-events');
+        const response = await fetch('http://localhost:8082/api/game-events');
         console.log('GameEvents: API 回應狀態:', response.status);
         
         if (!response.ok) {

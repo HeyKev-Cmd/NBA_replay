@@ -9,7 +9,7 @@ const Teams = () => {
     const fetchTeams = async () => {
       try {
         console.log('Teams: 開始 fetch /api/teams');
-        const response = await fetch('http://localhost:8081/api/teams');
+        const response = await fetch('http://localhost:8082/api/teams');
         console.log('Teams: API 回應狀態:', response.status);
         
         if (!response.ok) {

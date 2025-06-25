@@ -21,8 +21,8 @@ const Dashboard = () => {
     const fetchData = async () => {
       try {
         const [teamsResponse, playersResponse] = await Promise.all([
-          fetch('http://localhost:8081/api/teams'),
-          fetch('http://localhost:8081/api/players')
+          fetch('http://localhost:8082/api/teams'),
+          fetch('http://localhost:8082/api/players')
         ]);
 
         if (!teamsResponse.ok || !playersResponse.ok) {

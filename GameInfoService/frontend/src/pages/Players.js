@@ -9,7 +9,7 @@ const Players = () => {
     const fetchPlayers = async () => {
       try {
         console.log('Players: 開始 fetch /api/players');
-        const response = await fetch('http://localhost:8081/api/players');
+        const response = await fetch('http://localhost:8082/api/players');
         console.log('Players: API 回應狀態:', response.status);
         
         if (!response.ok) {
