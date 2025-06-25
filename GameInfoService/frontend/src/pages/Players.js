@@ -8,19 +8,19 @@ const Players = () => {
   useEffect(() => {
     const fetchPlayers = async () => {
       try {
-        console.log('Players: 開始 fetch /api/players');
+        console.log('Players: Start fetch /api/players');
         const response = await fetch('http://localhost:8082/api/players');
-        console.log('Players: API 回應狀態:', response.status);
+        console.log('Players: API response status:', response.status);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const data = await response.json();
-        console.log('Players: 收到資料:', data);
+        console.log('Players: Received data:', data);
         setPlayers(data);
       } catch (error) {
-        console.error('Players: 錯誤:', error);
+        console.error('Players: Error:', error);
         setError(error.message);
       } finally {
         setLoading(false);
@@ -33,7 +33,7 @@ const Players = () => {
   if (error) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="text-red-600 bg-red-50 p-4 rounded-lg">錯誤: {error}</div>
+        <div className="text-red-600 bg-red-50 p-4 rounded-lg">Error: {error}</div>
       </div>
     );
   }
@@ -74,9 +74,9 @@ const Players = () => {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-            NBA 球員列表
+            NBA Player List
           </h1>
-          <p className="text-xl text-gray-600">探索所有 NBA 球員的詳細資料</p>
+          <p className="text-xl text-gray-600">Explore detailed information about all NBA players</p>
         </div>
 
         {/* Players Grid */}
@@ -112,19 +112,19 @@ const Players = () => {
               <div className="p-6">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">球隊</span>
+                    <span className="text-sm text-gray-500">Team</span>
                     <span className="text-sm font-semibold text-gray-900">{player.teamName}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">身高</span>
+                    <span className="text-sm text-gray-500">Height</span>
                     <span className="text-sm font-semibold text-gray-900">{player.height} cm</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">體重</span>
+                    <span className="text-sm text-gray-500">Weight</span>
                     <span className="text-sm font-semibold text-gray-900">{player.weight} kg</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">位置</span>
+                    <span className="text-sm text-gray-500">Position</span>
                     <span className={`text-sm font-semibold px-2 py-1 rounded-full ${getPositionBadgeColor(player.position)}`}>
                       {player.position}
                     </span>
@@ -134,10 +134,10 @@ const Players = () => {
                 {/* Action Buttons */}
                 <div className="mt-6 pt-4 border-t border-gray-100 space-y-2">
                   <button className="w-full bg-gradient-to-r from-green-500 to-blue-600 text-white py-2 px-4 rounded-lg hover:from-green-600 hover:to-blue-700 transition-all duration-200 transform hover:scale-105">
-                    查看統計
+                    View Statistics
                   </button>
                   <button className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-all duration-200">
-                    球員詳情
+                    Player Details
                   </button>
                 </div>
               </div>
@@ -147,7 +147,7 @@ const Players = () => {
 
         {/* Stats Summary */}
         <div className="mt-12 bg-white rounded-2xl shadow-lg p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">球員統計</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Player Statistics</h2>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
             {['PG', 'SG', 'SF', 'PF', 'C'].map((position) => (
               <div key={position} className="text-center">
@@ -160,7 +160,7 @@ const Players = () => {
           </div>
           <div className="mt-8 pt-6 border-t border-gray-100 text-center">
             <div className="text-2xl font-bold text-gray-900 mb-2">{players.length}</div>
-            <div className="text-gray-600">總球員數</div>
+            <div className="text-gray-600">Total Players</div>
           </div>
         </div>
       </div>

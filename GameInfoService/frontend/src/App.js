@@ -16,13 +16,12 @@ function App() {
         <Navbar />
         <main className="container mx-auto px-4 py-8">
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/" element={<PlayerStats />} />
+            {/* <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/teams" element={<Teams />} />
-            <Route path="/players" element={<Players />} />
-            <Route path="/player-stats" element={<PlayerStats />} />
-            <Route path="/games" element={<Games />} />
-            <Route path="/game-events" element={<GameEvents />} />
+            <Route path="/players" element={<Players />} /> */}
+            {/* <Route path="/games" element={<Games />} />
+            <Route path="/game-events" element={<GameEvents />} /> */}
           </Routes>
         </main>
       </div>

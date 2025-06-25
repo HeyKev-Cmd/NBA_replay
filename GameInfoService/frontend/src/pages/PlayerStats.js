@@ -1,26 +1,81 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const PlayerStats = () => {
   const [playerStats, setPlayerStats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const wsRef = useRef(null);
+
+  // Helper to update stats based on event
+  const updateStatsWithEvent = (event) => {
+    console.log('event: ', event);
+    setPlayerStats(prevStats => {
+      // Find player by name and jersey number
+      const playerIndex = prevStats.findIndex(p => {
+        const fullName = `${event.firstname} ${event.lastname}`.trim();
+        return (
+          (p.playerName && p.playerName.trim().toLowerCase() === fullName.toLowerCase()) ||
+          (p.jerseyNumber && String(p.jerseyNumber) === String(event.player_number))
+        );
+      });
+      if (playerIndex === -1) return prevStats; // Player not found
+      // Copy stats
+      const updatedStats = [...prevStats];
+      const player = { ...updatedStats[playerIndex] };
+      // Update stat by event_type
+      const eventType = (event.event_type || '').toLowerCase();
+
+      switch (true) {
+        case eventType === 'shot':
+          player.points = (player.points || 0) + 2;
+          break;
+        case eventType === 'points':
+          player.points = (player.points || 0) + 2;
+          break;
+        case eventType.startsWith('score'):
+          const parts = eventType.split('-');
+          const scoreValue = parts.length > 1 ? parseInt(parts[1], 10) : 2; // 預設2分
+          player.points = (player.points || 0) + (isNaN(scoreValue) ? 2 : scoreValue);
+          break;
+        case eventType === 'three':
+        case eventType === 'three_point':
+        case eventType === 'three-pointer':
+          player.points = (player.points || 0) + 3;
+          break;
+        case eventType === 'free_throw':
+          player.points = (player.points || 0) + 1;
+          break;
+        case eventType === 'rebound':
+          player.rebounds = (player.rebounds || 0) + 1;
+          break;
+        case eventType === 'assist':
+          player.assists = (player.assists || 0) + 1;
+          break;
+        case eventType === 'foul':
+          player.fouls = (player.fouls || 0) + 1;
+          break;
+        default:
+          break;
+      }
+      updatedStats[playerIndex] = player;
+      return updatedStats;
+    });
+  };
 
   useEffect(() => {
     const fetchPlayerStats = async () => {
       try {
-        console.log('PlayerStats: 開始 fetch /api/players');
         const response = await fetch('http://localhost:8082/api/players');
-        console.log('PlayerStats: API 回應狀態:', response.status);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const data = await response.json();
-        console.log('PlayerStats: 收到資料:', data);
+        console.log('PlayerStats: Data received:', data);
         setPlayerStats(data);
       } catch (error) {
-        console.error('PlayerStats: 錯誤:', error);
+        console.error('PlayerStats: Error:', error);
         setError(error.message);
       } finally {
         setLoading(false);
@@ -30,10 +85,46 @@ const PlayerStats = () => {
     fetchPlayerStats();
   }, []);
 
+  // WebSocket connection for live replay
+  useEffect(() => {
+    if (loading || error) return;
+    const ws = new window.WebSocket('ws://localhost:8081/ws/replay');
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      // Send start replay message
+      ws.send(JSON.stringify({
+        action: 'start_replay',
+        startTime: '00:00',
+        speed: 1.0
+      }));
+    };
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        // Only process if it looks like a game event
+        if (data.firstname && data.lastname && data.event_type) {
+          updateStatsWithEvent(data);
+        }
+      } catch (e) {
+        // Ignore non-JSON or non-event messages
+      }
+    };
+    ws.onerror = (e) => {
+      // Optionally handle error
+    };
+    ws.onclose = () => {
+      // Optionally handle close
+    };
+    return () => {
+      ws.close();
+    };
+  }, [loading, error]);
+
   if (error) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="text-red-600 bg-red-50 p-4 rounded-lg">錯誤: {error}</div>
+        <div className="text-red-600 bg-red-50 p-4 rounded-lg">Error: {error}</div>
       </div>
     );
   }
@@ -64,9 +155,9 @@ const PlayerStats = () => {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-            球員統計數據
+            Player Statistics
           </h1>
-          <p className="text-xl text-gray-600">查看球員的詳細戰績統計</p>
+          <p className="text-xl text-gray-600">View detailed game statistics for players</p>
         </div>
 
         {/* Stats Overview Cards */}
@@ -79,7 +170,7 @@ const PlayerStats = () => {
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">最高得分</p>
+                <p className="text-sm font-medium text-gray-600">Highest Score</p>
                 <p className="text-2xl font-bold text-gray-900">{maxPoints}</p>
               </div>
             </div>
@@ -93,7 +184,7 @@ const PlayerStats = () => {
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">最高籃板</p>
+                <p className="text-sm font-medium text-gray-600">Highest Rebound</p>
                 <p className="text-2xl font-bold text-gray-900">{maxRebounds}</p>
               </div>
             </div>
@@ -107,7 +198,7 @@ const PlayerStats = () => {
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">最高助攻</p>
+                <p className="text-sm font-medium text-gray-600">Highest Assist</p>
                 <p className="text-2xl font-bold text-gray-900">{maxAssists}</p>
               </div>
             </div>
@@ -121,7 +212,7 @@ const PlayerStats = () => {
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">球員總數</p>
+                <p className="text-sm font-medium text-gray-600">Total Players</p>
                 <p className="text-2xl font-bold text-gray-900">{playerStats.length}</p>
               </div>
             </div>
@@ -131,32 +222,32 @@ const PlayerStats = () => {
         {/* Stats Table */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">球員統計詳情</h2>
+            <h2 className="text-xl font-bold text-gray-900">Player Statistics Details</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    球員
+                    Player
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    球隊
+                    Team
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    位置
+                    Position
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    得分
+                    Score
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    籃板
+                    Rebound
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    助攻
+                    Assist
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    犯規
+                    Foul
                   </th>
                 </tr>
               </thead>
