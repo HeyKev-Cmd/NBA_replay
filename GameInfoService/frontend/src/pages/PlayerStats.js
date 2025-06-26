@@ -252,7 +252,7 @@ const PlayerStats = () => {
         <div className="flex flex-col items-center mb-8 space-y-4">
           {/* Speed Input */}
           <div className="flex items-center space-x-2">
-            <label htmlFor="replay-speed" className="font-semibold text-gray-700">重播速度：</label>
+            <label htmlFor="replay-speed" className="font-semibold text-gray-700">Replay Speed:</label>
             <input
               id="replay-speed"
               type="number"
@@ -267,7 +267,7 @@ const PlayerStats = () => {
               }}
               disabled={isReplaying}
             />
-            <span className="ml-6 font-semibold text-gray-700">比賽時間：</span>
+            <span className="ml-6 font-semibold text-gray-700">Game Time:</span>
             <span className="text-2xl font-mono text-purple-700 w-20 text-center">{formatReplayTime(replayTime)}</span>
           </div>
           <div className="flex justify-center space-x-4">
@@ -276,21 +276,21 @@ const PlayerStats = () => {
               onClick={() => setIsReplaying(true)}
               disabled={isReplaying}
             >
-              {isReplaying ? '重播中...' : '開始重播'}
+              {isReplaying ? 'Replaying...' : 'Start Replay'}
             </button>
             <button
               className="px-8 py-3 rounded-full font-bold text-lg border border-red-500 text-red-500 bg-white hover:bg-red-50 transition-colors duration-200 disabled:opacity-50"
               onClick={handleStopReplay}
               disabled={!isReplaying}
             >
-              停止重播
+              Stop Replay
             </button>
             <button
               className="px-8 py-3 rounded-full font-bold text-lg border border-blue-500 text-blue-500 bg-white hover:bg-blue-50 transition-colors duration-200 disabled:opacity-50"
               onClick={handleResetReplay}
               disabled={loading}
             >
-              重播重置
+              Reset Replay
             </button>
           </div>
         </div>
