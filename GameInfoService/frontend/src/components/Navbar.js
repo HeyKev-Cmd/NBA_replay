@@ -16,13 +16,13 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const navigation = [
-    { name: '首頁', href: '/', icon: HomeIcon },
-    { name: '儀表板', href: '/dashboard', icon: ChartBarIcon },
-    { name: '球隊', href: '/teams', icon: UserGroupIcon },
-    { name: '球員', href: '/players', icon: UserIcon },
-    { name: '球員統計', href: '/player-stats', icon: ChartBarIcon },
-    { name: '比賽', href: '/games', icon: CalendarIcon },
-    { name: '比賽事件', href: '/game-events', icon: BoltIcon },
+    // { name: '首頁', href: '/', icon: HomeIcon },
+    // { name: '儀表板', href: '/dashboard', icon: ChartBarIcon },
+    // { name: '球隊', href: '/teams', icon: UserGroupIcon },
+    // { name: '球員', href: '/players', icon: UserIcon },
+    { name: 'Player Stats', href: '/player-stats', icon: ChartBarIcon },
+    // { name: '比賽', href: '/games', icon: CalendarIcon },
+    // { name: '比賽事件', href: '/game-events', icon: BoltIcon },
   ];
 
   return (
@@ -37,7 +37,7 @@ const Navbar = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
               </div>
-              <h1 className="text-xl font-bold text-white">NBA 資訊系統</h1>
+              <h1 className="text-xl font-bold text-white">NBA Replay</h1>
             </div>
             
             {/* Desktop Navigation */}

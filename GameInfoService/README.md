@@ -1,104 +1,104 @@
-# NBA PostgreSQL 資料庫
+# NBA PostgreSQL Database
 
-這是一個包含 NBA 相關資料的 PostgreSQL 資料庫，使用 Docker 容器化部署。
+This is a PostgreSQL database containing NBA-related data, containerized with Docker for deployment.
 
-## 資料庫結構
+## Database Structure
 
-### 表格說明
+### Table Descriptions
 
-1. **teams** - 球隊資訊
-   - team_id: 球隊ID (主鍵)
-   - team_name: 球隊名稱
-   - city: 城市
-   - conference: 聯盟 (Eastern/Western)
-   - division: 分區
-   - founded_year: 成立年份
-   - arena: 主場館
+1. **teams** - Team Information
+   - team_id: Team ID (Primary Key)
+   - team_name: Team Name
+   - city: City
+   - conference: Conference (Eastern/Western)
+   - division: Division
+   - founded_year: Year Founded
+   - arena: Home Arena
 
-2. **players** - 球員資訊
-   - player_id: 球員ID (主鍵)
-   - team_id: 所屬球隊ID (外鍵)
-   - player_name: 球員姓名
-   - jersey_number: 球衣號碼
-   - position: 位置
-   - height_cm: 身高(公分)
-   - weight_kg: 體重(公斤)
-   - birth_date: 出生日期
-   - college: 大學
-   - salary: 薪資
+2. **players** - Player Information
+   - player_id: Player ID (Primary Key)
+   - team_id: Team ID (Foreign Key)
+   - player_name: Player Name
+   - jersey_number: Jersey Number
+   - position: Position
+   - height_cm: Height (cm)
+   - weight_kg: Weight (kg)
+   - birth_date: Date of Birth
+   - college: College
+   - salary: Salary
 
-3. **games** - 比賽資訊
-   - game_id: 比賽ID (主鍵)
-   - home_team_id: 主隊ID (外鍵)
-   - away_team_id: 客隊ID (外鍵)
-   - game_date: 比賽日期
-   - game_time: 比賽時間
-   - season: 賽季
-   - status: 比賽狀態
-   - home_score: 主隊得分
-   - away_score: 客隊得分
+3. **games** - Game Information
+   - game_id: Game ID (Primary Key)
+   - home_team_id: Home Team ID (Foreign Key)
+   - away_team_id: Away Team ID (Foreign Key)
+   - game_date: Game Date
+   - game_time: Game Time
+   - season: Season
+   - status: Game Status
+   - home_score: Home Team Score
+   - away_score: Away Team Score
 
-4. **game_events** - 比賽事件
-   - event_id: 事件ID (主鍵)
-   - game_id: 比賽ID (外鍵)
-   - player_id: 球員ID (外鍵)
-   - event_type: 事件類型
-   - event_time: 事件時間
-   - quarter: 節次
-   - time_remaining: 剩餘時間
-   - description: 事件描述
-   - points: 得分
+4. **game_events** - Game Events
+   - event_id: Event ID (Primary Key)
+   - game_id: Game ID (Foreign Key)
+   - player_id: Player ID (Foreign Key)
+   - event_type: Event Type
+   - event_time: Event Time
+   - quarter: Quarter
+   - time_remaining: Time Remaining
+   - description: Event Description
+   - points: Points
 
-5. **player_stats** - 球員統計
-   - stat_id: 統計ID (主鍵)
-   - game_id: 比賽ID (外鍵)
-   - player_id: 球員ID (外鍵)
-   - minutes_played: 上場時間
-   - points: 得分
-   - rebounds: 籃板
-   - assists: 助攻
-   - steals: 抄截
-   - blocks: 阻攻
-   - turnovers: 失誤
-   - fouls: 犯規
-   - field_goals_made/attempted: 投籃命中/出手
-   - three_pointers_made/attempted: 三分球命中/出手
-   - free_throws_made/attempted: 罰球命中/出手
+5. **player_stats** - Player Statistics
+   - stat_id: Stat ID (Primary Key)
+   - game_id: Game ID (Foreign Key)
+   - player_id: Player ID (Foreign Key)
+   - minutes_played: Minutes Played
+   - points: Points
+   - rebounds: Rebounds
+   - assists: Assists
+   - steals: Steals
+   - blocks: Blocks
+   - turnovers: Turnovers
+   - fouls: Fouls
+   - field_goals_made/attempted: Field Goals Made/Attempted
+   - three_pointers_made/attempted: Three Pointers Made/Attempted
+   - free_throws_made/attempted: Free Throws Made/Attempted
 
-### 檢視表
+### Views
 
-1. **game_summary** - 比賽摘要檢視
-2. **player_performance** - 球員表現檢視
+1. **game_summary** - Game Summary View
+2. **player_performance** - Player Performance View
 
-## 啟動資料庫
+## Starting the Database
 
-### 使用合併後的 Docker Compose (推薦)
+### Using Combined Docker Compose (Recommended)
 
 ```bash
-# 在專案根目錄執行
+# Run in the project root directory
 docker-compose up -d
 
-# 查看所有服務狀態
+# Check all service statuses
 docker-compose ps
 
-# 查看 PostgreSQL 日誌
+# View PostgreSQL logs
 docker-compose logs nba-postgres
 ```
 
-### 只啟動 PostgreSQL 資料庫
+### Start Only the PostgreSQL Database
 
 ```bash
-# 只啟動 PostgreSQL 服務
+# Start only the PostgreSQL service
 docker-compose up -d nba-postgres
 
-# 查看資料庫狀態
+# Check database status
 docker-compose ps nba-postgres
 ```
 
-### 使用 Docker 指令 (獨立啟動)
+### Using Docker Commands (Standalone)
 
 ```bash
-# 建立並啟動容器
+# Build and start the container
 docker build -t nba-postgres ./GameInfoService
 docker run -d \
   --name nba-postgres \
@@ -110,45 +110,45 @@ docker run -d \
   nba-postgres
 ```
 
-## 連接資料庫
+## Connecting to the Database
 
-### 連接資訊
-- **主機**: localhost (或 nba-postgres 在 Docker 網路內)
-- **埠號**: 5432
-- **資料庫**: real_time_nba
-- **使用者**: nba
-- **密碼**: 1q2w3e4r
+### Connection Information
+- **Host**: localhost (or nba-postgres within Docker network)
+- **Port**: 5432
+- **Database**: real_time_nba
+- **User**: nba
+- **Password**: 1q2w3e4r
 
-### 使用 psql 連接
+### Connect Using psql
 
 ```bash
-# 進入容器
+# Enter the container
 docker exec -it nba-postgres psql -U nba -d real_time_nba
 
-# 或直接連接
+# Or connect directly
 psql -h localhost -p 5432 -U nba -d real_time_nba
 ```
 
-### 常用查詢範例
+### Common Query Examples
 
 ```sql
--- 查看所有球隊
+-- View all teams
 SELECT * FROM teams;
 
--- 查看所有球員
+-- View all players
 SELECT p.player_name, t.team_name, p.position 
 FROM players p 
 JOIN teams t ON p.team_id = t.team_id;
 
--- 查看比賽摘要
+-- View game summary
 SELECT * FROM game_summary;
 
--- 查看球員表現
+-- View player performance
 SELECT * FROM player_performance 
 WHERE points > 20 
 ORDER BY points DESC;
 
--- 查看特定比賽的事件
+-- View events for a specific game
 SELECT ge.event_time, p.player_name, ge.event_type, ge.description
 FROM game_events ge
 JOIN players p ON ge.player_id = p.player_id
@@ -156,53 +156,53 @@ WHERE ge.game_id = 1
 ORDER BY ge.event_time;
 ```
 
-## 停止服務
+## Stopping Services
 
 ```bash
-# 停止所有服務
+# Stop all services
 docker-compose down
 
-# 只停止 PostgreSQL
+# Stop only PostgreSQL
 docker-compose stop nba-postgres
 
-# 停止並移除所有容器和資料
+# Stop and remove all containers and data
 docker-compose down -v
 ```
 
-## 資料備份與還原
+## Database Backup and Restore
 
-### 備份資料庫
+### Backup Database
 
 ```bash
 docker exec nba-postgres pg_dump -U nba real_time_nba > backup.sql
 ```
 
-### 還原資料庫
+### Restore Database
 
 ```bash
 docker exec -i nba-postgres psql -U nba real_time_nba < backup.sql
 ```
 
-## 與其他服務的整合
+## Integration with Other Services
 
-PostgreSQL 資料庫已整合到整個 NBA 即時系統中：
+The PostgreSQL database is integrated into the real-time NBA system:
 
-- **Kafka**: 用於事件串流
-- **GameEventIngestService**: 遊戲事件攝取服務，可以將事件儲存到資料庫
-- **Redpanda Console**: Kafka 管理介面
+- **Kafka**: For event streaming
+- **GameEventIngestService**: Game event ingestion service, can store events in the database
+- **Redpanda Console**: Kafka management interface
 
-### 服務依賴關係
+### Service Dependencies
 
 ```
 Kafka ← GameEventIngestService → PostgreSQL
 ```
 
-GameEventIngestService 會等待 Kafka 和 PostgreSQL 都準備就緒後才啟動。
+GameEventIngestService will wait for both Kafka and PostgreSQL to be ready before starting.
 
-## 注意事項
+## Notes
 
-1. 資料庫初始化腳本 (`init.sql`) 只會在容器首次啟動時執行
-2. 如果修改了 `init.sql`，需要重新建立容器才能生效
-3. 資料會持久化保存在 Docker volume 中
-4. 預設的資料庫連接埠是 5432，請確保該埠號未被其他服務佔用
-5. 在 Docker 網路內，其他服務可以使用 `nba-postgres` 作為主機名稱連接資料庫 
+1. The database initialization script (`init.sql`) only runs the first time the container starts
+2. If you modify `init.sql`, you need to recreate the container for changes to take effect
+3. Data is persisted in a Docker volume
+4. The default database port is 5432; make sure this port is not used by other services
+5. Within the Docker network, other services can use `nba-postgres` as the hostname to connect to the database 

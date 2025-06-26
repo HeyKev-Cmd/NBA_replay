@@ -8,19 +8,19 @@ const Teams = () => {
   useEffect(() => {
     const fetchTeams = async () => {
       try {
-        console.log('Teams: 開始 fetch /api/teams');
+        console.log('Teams: Start fetch /api/teams');
         const response = await fetch('http://localhost:8082/api/teams');
-        console.log('Teams: API 回應狀態:', response.status);
+        console.log('Teams: API response status:', response.status);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const data = await response.json();
-        console.log('Teams: 收到資料:', data);
+        console.log('Teams: Received data:', data);
         setTeams(data);
       } catch (error) {
-        console.error('Teams: 錯誤:', error);
+        console.error('Teams: Error:', error);
         setError(error.message);
       } finally {
         setLoading(false);
@@ -33,7 +33,7 @@ const Teams = () => {
   if (error) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="text-red-600 bg-red-50 p-4 rounded-lg">錯誤: {error}</div>
+        <div className="text-red-600 bg-red-50 p-4 rounded-lg">Error: {error}</div>
       </div>
     );
   }
@@ -56,9 +56,9 @@ const Teams = () => {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            NBA 球隊列表
+            NBA Team List
           </h1>
-          <p className="text-xl text-gray-600">探索所有 NBA 球隊的詳細資訊</p>
+          <p className="text-xl text-gray-600">Explore detailed information about all NBA teams</p>
         </div>
 
         {/* Teams Grid */}
@@ -93,15 +93,15 @@ const Teams = () => {
               <div className="p-6">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">成立年份</span>
+                    <span className="text-sm text-gray-500">Founded Year</span>
                     <span className="text-sm font-semibold text-gray-900">{team.foundedYear}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">主場館</span>
+                    <span className="text-sm text-gray-500">Arena</span>
                     <span className="text-sm font-semibold text-gray-900 truncate ml-2">{team.arena}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">聯盟</span>
+                    <span className="text-sm text-gray-500">League</span>
                     <span className={`text-sm font-semibold px-2 py-1 rounded-full ${
                       team.conference === 'Eastern' 
                         ? 'bg-red-100 text-red-700' 
@@ -115,7 +115,7 @@ const Teams = () => {
                 {/* Action Button */}
                 <div className="mt-6 pt-4 border-t border-gray-100">
                   <button className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-2 px-4 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105">
-                    查看詳情
+                    View Details
                   </button>
                 </div>
               </div>
@@ -125,23 +125,23 @@ const Teams = () => {
 
         {/* Stats Summary */}
         <div className="mt-12 bg-white rounded-2xl shadow-lg p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">聯盟統計</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">League Statistics</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
               <div className="text-3xl font-bold text-blue-600 mb-2">
                 {teams.filter(t => t.conference === 'Western').length}
               </div>
-              <div className="text-gray-600">西區球隊</div>
+              <div className="text-gray-600">Western Teams</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-red-600 mb-2">
                 {teams.filter(t => t.conference === 'Eastern').length}
               </div>
-              <div className="text-gray-600">東區球隊</div>
+              <div className="text-gray-600">Eastern Teams</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-purple-600 mb-2">{teams.length}</div>
-              <div className="text-gray-600">總球隊數</div>
+              <div className="text-gray-600">Total Teams</div>
             </div>
           </div>
         </div>

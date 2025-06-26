@@ -1,26 +1,101 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const PlayerStats = () => {
   const [playerStats, setPlayerStats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const wsRef = useRef(null);
+  const [animatedPlayers, setAnimatedPlayers] = useState({});
+  // Tab state for teams
+  const [selectedTeam, setSelectedTeam] = useState(null);
+  const [isReplaying, setIsReplaying] = useState(false);
+  const [replaySpeed, setReplaySpeed] = useState(1);
+  const [replayTime, setReplayTime] = useState(0); // 單位：秒
+  const timerRef = useRef(null);
+
+  // Helper to update stats based on event
+  const updateStatsWithEvent = (event) => {
+    setPlayerStats(prevStats => {
+      // Find player by name and jersey number
+      const playerIndex = prevStats.findIndex(p => {
+        const fullName = `${event.firstname} ${event.lastname}`.trim();
+        return (
+          (p.playerName && p.playerName.trim().toLowerCase() === fullName.toLowerCase()) ||
+          (p.jerseyNumber && String(p.jerseyNumber) === String(event.player_number))
+        );
+      });
+      if (playerIndex === -1) return prevStats; // Player not found
+      // Copy stats
+      const updatedStats = [...prevStats];
+      const player = { ...updatedStats[playerIndex] };
+      const prevPoints = player.points || 0;
+      // Update stat by event_type
+      const eventType = (event.event_type || '').toLowerCase();
+
+      switch (true) {
+        case eventType === 'shot':
+          player.points = (player.points || 0) + 2;
+          break;
+        case eventType === 'points':
+          player.points = (player.points || 0) + 2;
+          break;
+        case eventType.startsWith('score'):
+          const parts = eventType.split('-');
+          const scoreValue = parts.length > 1 ? parseInt(parts[1], 10) : 2; // 預設2分
+          player.points = (player.points || 0) + (isNaN(scoreValue) ? 2 : scoreValue);
+          break;
+        case eventType === 'three':
+        case eventType === 'three_point':
+        case eventType === 'three-pointer':
+          player.points = (player.points || 0) + 3;
+          break;
+        case eventType === 'free_throw':
+          player.points = (player.points || 0) + 1;
+          break;
+        case eventType === 'rebound':
+          player.rebounds = (player.rebounds || 0) + 1;
+          break;
+        case eventType === 'assist':
+          player.assists = (player.assists || 0) + 1;
+          break;
+        case eventType === 'foul':
+          player.fouls = (player.fouls || 0) + 1;
+          break;
+        default:
+          break;
+      }
+      // Animation trigger
+      if ((player.points || 0) > prevPoints) {
+        setAnimatedPlayers(prev => ({
+          ...prev,
+          [player.playerId]: true
+        }));
+        setTimeout(() => {
+          setAnimatedPlayers(prev => ({
+            ...prev,
+            [player.playerId]: false
+          }));
+        }, 700); // Animation duration in ms
+      }
+      updatedStats[playerIndex] = player;
+      return updatedStats;
+    });
+  };
 
   useEffect(() => {
     const fetchPlayerStats = async () => {
       try {
-        console.log('PlayerStats: 開始 fetch /api/players');
         const response = await fetch('http://localhost:8082/api/players');
-        console.log('PlayerStats: API 回應狀態:', response.status);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const data = await response.json();
-        console.log('PlayerStats: 收到資料:', data);
+        console.log('PlayerStats: Data received:', data);
         setPlayerStats(data);
       } catch (error) {
-        console.error('PlayerStats: 錯誤:', error);
+        console.error('PlayerStats: Error:', error);
         setError(error.message);
       } finally {
         setLoading(false);
@@ -30,10 +105,114 @@ const PlayerStats = () => {
     fetchPlayerStats();
   }, []);
 
+  // WebSocket connection for live replay (only on button click)
+  useEffect(() => {
+    if (!isReplaying || loading || error) return;
+    const ws = new window.WebSocket('ws://localhost:8081/ws/replay');
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      ws.send(JSON.stringify({
+        action: 'start_replay',
+        startTime: '00:00',
+        speed: parseInt(replaySpeed, 10) || 1
+      }));
+    };
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.firstname && data.lastname && data.event_type) {
+          updateStatsWithEvent(data);
+        }
+      } catch (e) {}
+    };
+    ws.onerror = (e) => {};
+    ws.onclose = () => {};
+    return () => {
+      ws.close();
+    };
+  }, [isReplaying, loading, error, replaySpeed]);
+
+  // Extract unique team names from playerStats
+  const teamNames = Array.from(new Set(playerStats.map(p => p.teamName))).filter(Boolean);
+  // Set default selected team when data loads
+  useEffect(() => {
+    if (!selectedTeam && teamNames.length > 0) {
+      setSelectedTeam(teamNames[0]);
+    }
+  }, [teamNames, selectedTeam]);
+
+  // Filtered stats for selected team
+  const filteredStats = selectedTeam ? playerStats.filter(p => p.teamName === selectedTeam) : playerStats;
+
+  // 停止重播
+  const handleStopReplay = () => {
+    if (wsRef.current) {
+      try {
+        wsRef.current.send(JSON.stringify({ action: 'stop_replay' }));
+      } catch (e) {}
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    setIsReplaying(false);
+  };
+
+  // 重播重置
+  const handleResetReplay = async () => {
+    handleStopReplay();
+    setReplaySpeed(1);
+    setReplayTime(0);
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('http://localhost:8082/api/players');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setPlayerStats(data);
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 比賽時間推進
+  useEffect(() => {
+    if (isReplaying) {
+      timerRef.current = setInterval(() => {
+        setReplayTime(prev => prev + (parseInt(replaySpeed, 10) || 1));
+      }, 1000);
+    } else {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    }
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [isReplaying, replaySpeed]);
+
+  // 格式化比賽時間 mm:ss
+  const formatReplayTime = (sec) => {
+    const m = Math.floor(sec / 60).toString().padStart(2, '0');
+    const s = (sec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
   if (error) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="text-red-600 bg-red-50 p-4 rounded-lg">錯誤: {error}</div>
+        <div className="text-red-600 bg-red-50 p-4 rounded-lg">Error: {error}</div>
       </div>
     );
   }
@@ -64,13 +243,75 @@ const PlayerStats = () => {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-            球員統計數據
+            Player Statistics
           </h1>
-          <p className="text-xl text-gray-600">查看球員的詳細戰績統計</p>
+          <p className="text-xl text-gray-600">View detailed game statistics for players</p>
         </div>
 
+        {/* Start/Stop/Reset Replay Buttons + Speed Input + Time */}
+        <div className="flex flex-col items-center mb-8 space-y-4">
+          {/* Speed Input */}
+          <div className="flex items-center space-x-2">
+            <label htmlFor="replay-speed" className="font-semibold text-gray-700">Replay Speed:</label>
+            <input
+              id="replay-speed"
+              type="number"
+              min={1}
+              step={1}
+              className="w-24 px-3 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400 text-lg text-center"
+              value={replaySpeed}
+              onChange={e => {
+                const v = e.target.value;
+                if (/^\d+$/.test(v) && parseInt(v, 10) > 0) setReplaySpeed(parseInt(v, 10));
+                else if (v === '') setReplaySpeed('');
+              }}
+              disabled={isReplaying}
+            />
+            <span className="ml-6 font-semibold text-gray-700">Game Time:</span>
+            <span className="text-2xl font-mono text-purple-700 w-20 text-center">{formatReplayTime(replayTime)}</span>
+          </div>
+          <div className="flex justify-center space-x-4">
+            <button
+              className={`px-8 py-3 rounded-full font-bold text-lg border transition-colors duration-200 ${isReplaying ? 'bg-gray-300 text-gray-500 border-gray-300 cursor-not-allowed' : 'bg-purple-600 text-white border-purple-600 hover:bg-purple-700'}`}
+              onClick={() => setIsReplaying(true)}
+              disabled={isReplaying}
+            >
+              {isReplaying ? 'Replaying...' : 'Start Replay'}
+            </button>
+            <button
+              className="px-8 py-3 rounded-full font-bold text-lg border border-red-500 text-red-500 bg-white hover:bg-red-50 transition-colors duration-200 disabled:opacity-50"
+              onClick={handleStopReplay}
+              disabled={!isReplaying}
+            >
+              Stop Replay
+            </button>
+            <button
+              className="px-8 py-3 rounded-full font-bold text-lg border border-blue-500 text-blue-500 bg-white hover:bg-blue-50 transition-colors duration-200 disabled:opacity-50"
+              onClick={handleResetReplay}
+              disabled={loading}
+            >
+              Reset Replay
+            </button>
+          </div>
+        </div>
+
+        {/* Team Tabs */}
+        {teamNames.length > 1 && (
+          <div className="flex justify-center mb-8 space-x-4">
+            {teamNames.map(team => (
+              <button
+                key={team}
+                className={`px-6 py-2 rounded-full font-semibold border transition-colors duration-200 ${selectedTeam === team ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-purple-600 border-purple-200 hover:bg-purple-50'}`}
+                onClick={() => setSelectedTeam(team)}
+              >
+                {team}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Stats Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <div className="flex items-center">
               <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
@@ -79,7 +320,7 @@ const PlayerStats = () => {
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">最高得分</p>
+                <p className="text-sm font-medium text-gray-600">Highest Score</p>
                 <p className="text-2xl font-bold text-gray-900">{maxPoints}</p>
               </div>
             </div>
@@ -93,7 +334,7 @@ const PlayerStats = () => {
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">最高籃板</p>
+                <p className="text-sm font-medium text-gray-600">Highest Rebound</p>
                 <p className="text-2xl font-bold text-gray-900">{maxRebounds}</p>
               </div>
             </div>
@@ -107,7 +348,7 @@ const PlayerStats = () => {
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">最高助攻</p>
+                <p className="text-sm font-medium text-gray-600">Highest Assist</p>
                 <p className="text-2xl font-bold text-gray-900">{maxAssists}</p>
               </div>
             </div>
@@ -121,47 +362,47 @@ const PlayerStats = () => {
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">球員總數</p>
+                <p className="text-sm font-medium text-gray-600">Total Players</p>
                 <p className="text-2xl font-bold text-gray-900">{playerStats.length}</p>
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Stats Table */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">球員統計詳情</h2>
+            <h2 className="text-xl font-bold text-gray-900">Player Statistics Details</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    球員
+                    Player
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    球隊
+                    Team
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    位置
+                    Position
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    得分
+                    Score
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    籃板
+                    Rebound
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    助攻
+                    Assist
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    犯規
+                    Foul
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {playerStats.map((player, index) => (
+                {filteredStats.map((player, index) => (
                   <tr 
                     key={player.playerId} 
                     className="hover:bg-gray-50 transition-colors duration-200"
@@ -187,7 +428,7 @@ const PlayerStats = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-sm font-semibold rounded-full ${getStatColor(player.points || 0, maxPoints)}`}>
+                      <span className={`inline-flex px-2 py-1 text-sm font-semibold rounded-full ${getStatColor(player.points || 0, maxPoints)} ${animatedPlayers[player.playerId] ? 'animate-pop' : ''}`}>
                         {player.points || 0}
                       </span>
                     </td>
