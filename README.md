@@ -25,6 +25,8 @@ This system allows you to replay NBA game events with accurate timing, variable 
 
 The system uses a microservices architecture with the following components:
 
+![Real-time NBA Architecture](docs/real-time-NBA-architecture.drawio.png)
+
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
 │   Game Event    │    │      Kafka       │    │   Replay        │
@@ -46,6 +48,14 @@ The system uses a microservices architecture with the following components:
 3. **Replay Service**: Spring Boot service that consumes events and manages replay timing
 4. **Web UI**: HTML/JavaScript interface for controlling and viewing replays
 5. **Redpanda Console**: Web-based Kafka management interface
+
+## 🎬 Demo
+
+Watch the system in action:
+
+[![NBA Replay System Demo](https://img.shields.io/badge/Video-Demo-red?style=for-the-badge)](docs/result_demo_v1.mp4)
+
+📹 **[View Demo Video](docs/result_demo_v1.mp4)** - See the real-time NBA game replay system in action with variable playback speeds and precise timing control.
 
 ## 🚀 Quick Start
 

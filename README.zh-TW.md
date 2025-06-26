@@ -27,6 +27,8 @@
 
 系統使用微服務架構，包含以下元件：
 
+![即時 NBA 架構圖](docs/real-time-NBA-architecture.drawio.png)
+
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
 │   比賽事件      │    │      Kafka       │    │   重播          │
@@ -57,6 +59,14 @@
 4. **比賽資訊服務**: 包含球隊、球員和比賽資訊的完整 NBA 資料庫
 5. **網頁 UI**: 用於控制和檢視重播的 HTML/JavaScript 介面
 6. **Redpanda Console**: 基於網頁的 Kafka 管理介面
+
+## 🎬 系統演示
+
+觀看系統實際運作：
+
+[![NBA 重播系統演示](https://img.shields.io/badge/影片-演示-red?style=for-the-badge)](docs/result_demo_v1.mp4)
+
+📹 **[觀看演示影片](docs/result_demo_v1.mp4)** - 觀看即時 NBA 比賽重播系統的實際運作，包含可變播放速度和精確時間控制。
 
 ## 🚀 快速開始
 
