@@ -55,7 +55,7 @@ Watch the system in action:
 
 [![NBA Replay System Demo](https://img.shields.io/badge/Video-Demo-red?style=for-the-badge)](docs/result_demo_v1.mp4)
 
-📹 **[View Demo Video](docs/result_demo_v1.mp4)** - See the real-time NBA game replay system in action with variable playback speeds and precise timing control.
+📹 **[View Demo ](docs/result_demo_v1.gif)** - See the real-time NBA game replay system in action with variable playback speeds and precise timing control.
 
 ## 🚀 Quick Start
 
