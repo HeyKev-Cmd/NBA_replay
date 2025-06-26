@@ -45,6 +45,12 @@
   }
 }
 
+@keyframes pop {
+  0% { transform: scale(1); background: #fbbf24; }
+  50% { transform: scale(1.4); background: #f59e42; }
+  100% { transform: scale(1); }
+}
+
 /* Custom utility classes */
 .animate-fade-in-up {
   animation: fadeInUp 0.6s ease-out;
@@ -60,6 +66,10 @@
 
 .animate-pulse-slow {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-pop {
+  animation: pop 0.7s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Gradient text support */
