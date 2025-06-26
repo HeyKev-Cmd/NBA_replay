@@ -64,9 +64,9 @@
 
 觀看系統實際運作：
 
-[![NBA 重播系統演示](https://img.shields.io/badge/影片-演示-red?style=for-the-badge)](docs/result_demo_v1.mp4)
+![NBA 重播系統演示](docs/result_demo_v1.gif)
 
-📹 **[觀看演示影片](docs/result_demo_v1.mp4)** - 觀看即時 NBA 比賽重播系統的實際運作，包含可變播放速度和精確時間控制。
+📹 **[觀看完整演示影片](docs/result_demo_v1.mp4)** - 觀看即時 NBA 比賽重播系統的實際運作，包含可變播放速度和精確時間控制。
 
 ## 🚀 快速開始
 

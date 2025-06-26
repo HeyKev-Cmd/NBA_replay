@@ -53,9 +53,9 @@ The system uses a microservices architecture with the following components:
 
 Watch the system in action:
 
-[![NBA Replay System Demo](https://img.shields.io/badge/Video-Demo-red?style=for-the-badge)](docs/result_demo_v1.mp4)
+![NBA Replay System Demo](docs/result_demo_v1.gif)
 
-📹 **[View Demo ](docs/result_demo_v1.gif)** - See the real-time NBA game replay system in action with variable playback speeds and precise timing control.
+📹 **[View Full Demo Video](docs/result_demo_v1.mp4)** - See the real-time NBA game replay system in action with variable playback speeds and precise timing control.
 
 ## 🚀 Quick Start
 
