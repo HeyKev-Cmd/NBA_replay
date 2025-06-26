@@ -5,11 +5,12 @@ A Spring Boot service that subscribes to Kafka topics containing NBA game events
 ## Features
 
 - **Kafka Consumer**: Subscribes to NBA game event topics
-- **WebSocket Server**: Broadcasts events to connected clients in real-time using raw JSON WebSocket
+- **Raw JSON WebSocket Server**: Broadcasts events to connected clients using raw JSON WebSocket (no STOMP)
 - **Time-Based Replay**: Replay events with original timing from any start point
-- **Playback Speed Control**: Adjust replay speed (0.5x to 5.0x)
+- **Playback Speed Control**: Adjust replay speed (0.5x to 96.0x)
 - **REST API**: Health checks and service status endpoints
 - **Docker Support**: Containerized deployment
+- **Real-time Status Updates**: Live replay status and timing information
 
 ## 🎯 Time-Based Replay System
 
@@ -44,6 +45,10 @@ Service: Waits 12 seconds, then sends to client
 The service uses the following configuration:
 
 ```properties
+# Server Configuration
+spring.application.name=ReplayService
+server.port=8081
+
 # Kafka Consumer Configuration
 spring.kafka.bootstrap-servers=${KAFKA_URL:localhost:9092}
 spring.kafka.consumer.group-id=replay-service-group
@@ -158,6 +163,16 @@ Use the provided `test-time-replay.html` file to test the time-based replay func
 5. Click "Start Replay"
 6. Events will be replayed with proper timing
 
+### WebSocket JSON Test
+
+Use the provided `test-websocket.html` file for basic WebSocket testing:
+
+1. Start the service
+2. Open `test-websocket.html` in a web browser
+3. Click "Connect" to establish WebSocket connection
+4. Send JSON commands in the text area
+5. View responses in the messages section
+
 ### Manual Testing
 
 You can also test using curl:
@@ -197,7 +212,7 @@ ws.onmessage = function(event) {
 ```
 Kafka Topic (nba-finals-game1)
     ↓
-KafkaConsumerService (consumes messages)
+KafkaConsumer (consumes messages)
     ↓
 ReplayService (manages timing and replay)
     ↓
@@ -218,18 +233,28 @@ Connected Clients (UI)
 - 1.0x (Normal speed)
 - 2.0x (Fast forward)
 - 5.0x (Very fast)
+- 10.0x (Ultra fast)
+- 20.0x (Lightning)
+- 48.0x (Instant)
+- 96.0x (Flash)
 
 ### ✅ Replay Controls
 - Start replay from specific time
 - Stop replay at any time
 - Get current replay status
-- View pending events count
+- Real-time status updates
 
 ### ✅ Real-Time Status
 - Current replay time
 - Playback speed
-- Number of pending events
 - Replay state (replaying/stopped)
+- Error handling and reporting
+
+### ✅ WebSocket Communication
+- Raw JSON WebSocket (no STOMP protocol)
+- Direct message handling
+- Automatic acknowledgment responses
+- Error reporting for invalid requests
 
 ## Dependencies
 
@@ -238,3 +263,30 @@ Connected Clients (UI)
 - Spring WebSocket
 - Jackson (JSON processing)
 - Java 17
+
+## Recent Changes
+
+- **Switched from STOMP to Raw JSON WebSocket**: Simplified WebSocket communication by removing STOMP configuration
+- **Added JsonWebSocketHandler**: Custom WebSocket handler for direct JSON message processing
+- **Improved Error Handling**: Better error reporting and acknowledgment responses
+- **Enhanced Status Updates**: Real-time replay status with timing information
+- **Updated Test Files**: Modified test HTML files to work with raw JSON WebSocket
+
+## Troubleshooting
+
+### Common Issues
+
+1. **WebSocket Connection Failed**: Ensure the service is running on port 8081
+2. **No Events Received**: Check Kafka topic configuration and ensure events are being published
+3. **Replay Not Starting**: Verify the start time format is MM:SS (e.g., "05:00")
+4. **Circular Dependency Error**: This was resolved by removing STOMP configuration and using raw JSON WebSocket
+
+### Logs
+
+The service provides detailed logging for:
+- WebSocket connections and disconnections
+- Kafka message consumption
+- Replay timing and event processing
+- Error conditions and debugging information
+
+Check the application logs for detailed information about service operation and any issues.
