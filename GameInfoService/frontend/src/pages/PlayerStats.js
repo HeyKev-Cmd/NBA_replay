@@ -5,7 +5,7 @@ const PlayerStats = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const wsRef = useRef(null);
-  const [animatedPlayers, setAnimatedPlayers] = useState({});
+  const [animatedPlayers, setAnimatedPlayers] = useState({}); // { [playerId]: { value, key } }
   // Tab state for teams
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [isReplaying, setIsReplaying] = useState(false);
@@ -15,8 +15,9 @@ const PlayerStats = () => {
 
   // Helper to update stats based on event
   const updateStatsWithEvent = (event) => {
+    let statKey = null;
+    let delta = 0;
     setPlayerStats(prevStats => {
-      // Find player by name and jersey number
       const playerIndex = prevStats.findIndex(p => {
         const fullName = `${event.firstname} ${event.lastname}`.trim();
         return (
@@ -29,53 +30,50 @@ const PlayerStats = () => {
       const updatedStats = [...prevStats];
       const player = { ...updatedStats[playerIndex] };
       const prevPoints = player.points || 0;
+      const prevRebounds = player.rebounds || 0;
+      const prevAssists = player.assists || 0;
+      const prevFouls = player.fouls || 0;
       // Update stat by event_type
       const eventType = (event.event_type || '').toLowerCase();
-
       switch (true) {
         case eventType === 'shot':
-          player.points = (player.points || 0) + 2;
-          break;
+          delta = 2; statKey = 'points'; player.points = prevPoints + 2; break;
         case eventType === 'points':
-          player.points = (player.points || 0) + 2;
-          break;
+          delta = 2; statKey = 'points'; player.points = prevPoints + 2; break;
         case eventType.startsWith('score'):
           const parts = eventType.split('-');
           const scoreValue = parts.length > 1 ? parseInt(parts[1], 10) : 2; // 預設2分
-          player.points = (player.points || 0) + (isNaN(scoreValue) ? 2 : scoreValue);
-          break;
-        case eventType === 'three':
-        case eventType === 'three_point':
+          delta = isNaN(scoreValue) ? 2 : scoreValue; statKey = 'points'; player.points = prevPoints + delta; break;
         case eventType === 'three-pointer':
-          player.points = (player.points || 0) + 3;
-          break;
+          delta = 3; statKey = 'points'; player.points = prevPoints + 3; break;
         case eventType === 'free_throw':
-          player.points = (player.points || 0) + 1;
-          break;
+          delta = 1; statKey = 'points'; player.points = prevPoints + 1; break;
         case eventType === 'rebound':
-          player.rebounds = (player.rebounds || 0) + 1;
-          break;
+          delta = 1; statKey = 'rebounds'; player.rebounds = prevRebounds + 1; break;
         case eventType === 'assist':
-          player.assists = (player.assists || 0) + 1;
-          break;
+          delta = 1; statKey = 'assists'; player.assists = prevAssists + 1; break;
         case eventType === 'foul':
-          player.fouls = (player.fouls || 0) + 1;
-          break;
+          delta = 1; statKey = 'fouls'; player.fouls = prevFouls + 1; break;
         default:
           break;
       }
-      // Animation trigger
-      if ((player.points || 0) > prevPoints) {
+      let foundPlayerKey = null;
+      if (statKey && delta > 0) {
+        foundPlayerKey = player.playerName + (player.jerseyNumber ? '-' + player.jerseyNumber : '');
+        const animKey = Date.now() + Math.random();
         setAnimatedPlayers(prev => ({
           ...prev,
-          [player.playerId]: true
+          [foundPlayerKey + '-' + statKey]: { value: delta, key: animKey }
         }));
         setTimeout(() => {
-          setAnimatedPlayers(prev => ({
-            ...prev,
-            [player.playerId]: false
-          }));
-        }, 700); // Animation duration in ms
+          setAnimatedPlayers(prev => {
+            const newState = { ...prev };
+            delete newState[foundPlayerKey + '-' + statKey];
+            return newState;
+          });
+        }, 1000);
+        console.log('event', event);
+        console.log('animatedPlayers set:', foundPlayerKey, statKey, delta);
       }
       updatedStats[playerIndex] = player;
       return updatedStats;
@@ -402,53 +400,76 @@ const PlayerStats = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredStats.map((player, index) => (
-                  <tr 
-                    key={player.playerId} 
-                    className="hover:bg-gray-50 transition-colors duration-200"
-                    style={{ animationDelay: `${index * 50}ms` }}
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
-                          {player.playerName.charAt(0)}
+                {filteredStats.map((player, index) => {
+                  const playerKey = player.playerName + (player.jerseyNumber ? '-' + player.jerseyNumber : '');
+                  return (
+                    <tr 
+                      key={playerKey} 
+                      className="hover:bg-gray-50 transition-colors duration-200"
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                            {player.playerName.charAt(0)}
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">{player.playerName}</div>
+                            <div className="text-sm text-gray-500">#{player.jerseyNumber}</div>
+                          </div>
                         </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{player.playerName}</div>
-                          <div className="text-sm text-gray-500">#{player.jerseyNumber}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{player.teamName}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                        {player.position}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-sm font-semibold rounded-full ${getStatColor(player.points || 0, maxPoints)} ${animatedPlayers[player.playerId] ? 'animate-pop' : ''}`}>
-                        {player.points || 0}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-sm font-semibold rounded-full ${getStatColor(player.rebounds || 0, maxRebounds)}`}>
-                        {player.rebounds || 0}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-sm font-semibold rounded-full ${getStatColor(player.assists || 0, maxAssists)}`}>
-                        {player.assists || 0}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex px-2 py-1 text-sm font-semibold rounded-full bg-gray-100 text-gray-800">
-                        {player.fouls || 0}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{player.teamName}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                          {player.position}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap relative">
+                        <span className={`inline-flex px-2 py-1 text-sm font-semibold rounded-full ${getStatColor(player.points || 0, maxPoints)}`}>
+                          {player.points || 0}
+                          {animatedPlayers[playerKey + '-points'] && (
+                            <span key={animatedPlayers[playerKey + '-points'].key} className="float-up-anim ml-1 text-green-600 text-xs font-bold">
+                              +{animatedPlayers[playerKey + '-points'].value}
+                            </span>
+                          )}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap relative">
+                        <span className={`inline-flex px-2 py-1 text-sm font-semibold rounded-full ${getStatColor(player.rebounds || 0, maxRebounds)}`}>
+                          {player.rebounds || 0}
+                          {animatedPlayers[playerKey + '-rebounds'] && (
+                            <span key={animatedPlayers[playerKey + '-rebounds'].key} className="float-up-anim ml-1 text-blue-600 text-xs font-bold">
+                              +{animatedPlayers[playerKey + '-rebounds'].value}
+                            </span>
+                          )}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap relative">
+                        <span className={`inline-flex px-2 py-1 text-sm font-semibold rounded-full ${getStatColor(player.assists || 0, maxAssists)}`}>
+                          {player.assists || 0}
+                          {animatedPlayers[playerKey + '-assists'] && (
+                            <span key={animatedPlayers[playerKey + '-assists'].key} className="float-up-anim ml-1 text-green-700 text-xs font-bold">
+                              +{animatedPlayers[playerKey + '-assists'].value}
+                            </span>
+                          )}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap relative">
+                        <span className="inline-flex px-2 py-1 text-sm font-semibold rounded-full bg-gray-100 text-gray-800">
+                          {player.fouls || 0}
+                          {animatedPlayers[playerKey + '-fouls'] && (
+                            <span key={animatedPlayers[playerKey + '-fouls'].key} className="float-up-anim ml-1 text-red-600 text-xs font-bold">
+                              +{animatedPlayers[playerKey + '-fouls'].value}
+                            </span>
+                          )}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

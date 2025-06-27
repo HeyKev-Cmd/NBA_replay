@@ -249,4 +249,17 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+.float-up-anim {
+  position: absolute;
+  left: 110%; /* 往右偏移到主數值右側 */
+  top: 0;
+  animation: floatUpFade 1s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes floatUpFade {
+  0% { opacity: 1; transform: translateY(0); }
+  60% { opacity: 1; transform: translateY(-16px); }
+  100% { opacity: 0; transform: translateY(-32px); }
 } 
