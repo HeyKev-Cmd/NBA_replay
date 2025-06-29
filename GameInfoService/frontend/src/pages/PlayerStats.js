@@ -20,43 +20,53 @@ const PlayerStats = () => {
     setPlayerStats(prevStats => {
       const playerIndex = prevStats.findIndex(p => {
         const fullName = `${event.firstname} ${event.lastname}`.trim();
+
         return (
-          (p.playerName && p.playerName.trim().toLowerCase() === fullName.toLowerCase()) ||
+          (p.playerName && p.playerName.trim().toLowerCase() === fullName.toLowerCase()) &&
           (p.jerseyNumber && String(p.jerseyNumber) === String(event.player_number))
         );
       });
       if (playerIndex === -1) return prevStats; // Player not found
       // Copy stats
+      
+      
       const updatedStats = [...prevStats];
       const player = { ...updatedStats[playerIndex] };
       const prevPoints = player.points || 0;
       const prevRebounds = player.rebounds || 0;
       const prevAssists = player.assists || 0;
       const prevFouls = player.fouls || 0;
+
       // Update stat by event_type
       const eventType = (event.event_type || '').toLowerCase();
-      switch (true) {
-        case eventType === 'shot':
-          delta = 2; statKey = 'points'; player.points = prevPoints + 2; break;
-        case eventType === 'points':
-          delta = 2; statKey = 'points'; player.points = prevPoints + 2; break;
-        case eventType.startsWith('score'):
-          const parts = eventType.split('-');
-          const scoreValue = parts.length > 1 ? parseInt(parts[1], 10) : 2; // 預設2分
-          delta = isNaN(scoreValue) ? 2 : scoreValue; statKey = 'points'; player.points = prevPoints + delta; break;
-        case eventType === 'three-pointer':
-          delta = 3; statKey = 'points'; player.points = prevPoints + 3; break;
-        case eventType === 'free_throw':
-          delta = 1; statKey = 'points'; player.points = prevPoints + 1; break;
-        case eventType === 'rebound':
-          delta = 1; statKey = 'rebounds'; player.rebounds = prevRebounds + 1; break;
-        case eventType === 'assist':
-          delta = 1; statKey = 'assists'; player.assists = prevAssists + 1; break;
-        case eventType === 'foul':
-          delta = 1; statKey = 'fouls'; player.fouls = prevFouls + 1; break;
-        default:
-          break;
+      if(eventType.startsWith){
+        const parts = eventType.split('-');
+        const scoreValue = parts.length > 1 ? parseInt(parts[1], 10) : 2; // 預設2分
+        delta = isNaN(scoreValue) ? 2 : scoreValue; statKey = 'points'; player.points = prevPoints + delta;
       }
+      else if(eventType === 'rebound'){
+        delta = 1; statKey = 'rebounds'; player.rebounds = prevRebounds + 1;
+      }
+      else if(eventType === 'assist'){
+        delta = 1; statKey = 'assists'; player.assists = prevAssists + 1;
+      }
+      else if(eventType === 'foul'){
+        delta = 1; statKey = 'fouls'; player.fouls = prevFouls + 1;
+      }
+      // switch (true) {
+      //   case eventType.startsWith('score'):
+      //     const parts = eventType.split('-');
+      //     const scoreValue = parts.length > 1 ? parseInt(parts[1], 10) : 2; // 預設2分
+      //     delta = isNaN(scoreValue) ? 2 : scoreValue; statKey = 'points'; player.points = prevPoints + delta; break;
+      //   case eventType === 'rebound':
+      //     delta = 1; statKey = 'rebounds'; player.rebounds = prevRebounds + 1; break;
+      //   case eventType === 'assist':
+      //     delta = 1; statKey = 'assists'; player.assists = prevAssists + 1; break;
+      //   case eventType === 'foul':
+      //     delta = 1; statKey = 'fouls'; player.fouls = prevFouls + 1; break;
+      //   default:
+      //     break;
+      // }
       let foundPlayerKey = null;
       if (statKey && delta > 0) {
         foundPlayerKey = player.playerName + (player.jerseyNumber ? '-' + player.jerseyNumber : '');
@@ -72,8 +82,6 @@ const PlayerStats = () => {
             return newState;
           });
         }, 1000);
-        console.log('event', event);
-        console.log('animatedPlayers set:', foundPlayerKey, statKey, delta);
       }
       updatedStats[playerIndex] = player;
       return updatedStats;
@@ -90,7 +98,6 @@ const PlayerStats = () => {
         }
         
         const data = await response.json();
-        console.log('PlayerStats: Data received:', data);
         setPlayerStats(data);
       } catch (error) {
         console.error('PlayerStats: Error:', error);
