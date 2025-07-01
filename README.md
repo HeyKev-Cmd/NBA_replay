@@ -53,7 +53,7 @@ The system uses a microservices architecture with the following components:
 
 Watch the system in action:
 
-![NBA Replay System Demo](docs/result_demo_v1.gif)
+![NBA Replay System Demo](docs/result_demo_v2.gif)
 
 📹 **[View Full Demo Video](docs/result_demo_v1.mp4)** - See the real-time NBA game replay system in action with variable playback speeds and precise timing control.
 
