@@ -139,7 +139,7 @@ docker-compose up -d
 - **WebSocket 端點**: `ws://localhost:8081/ws/replay`
 
 #### Redpanda Console
-- **埠號**: 8080
+- **埠號**: 8083
 - **用途**: 基於網頁的 Kafka 主題管理
 - **功能**: 主題瀏覽、訊息檢查、消費者監控
 
@@ -349,7 +349,7 @@ NBA_replay/
 
 ### Kafka Console
 
-在 http://localhost:8080 存取 Redpanda Console 以：
+在 http://localhost:8083 存取 Redpanda Console 以：
 - 瀏覽主題和分區
 - 檢查訊息
 - 監控消費者群組

@@ -112,7 +112,7 @@ The system includes the following services:
 - **Features**: Time-based replay, speed control, offset management
 
 #### Redpanda Console
-- **Port**: 8080
+- **Port**: 8083
 - **Purpose**: Web-based Kafka topic management
 - **Features**: Topic browsing, message inspection, consumer monitoring
 
@@ -282,7 +282,7 @@ NBA_replay/
 
 ### Kafka Console
 
-Access Redpanda Console at http://localhost:8080 to:
+Access Redpanda Console at http://localhost:8083 to:
 - Browse topics and partitions
 - Inspect messages
 - Monitor consumer groups
